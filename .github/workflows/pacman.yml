@@ -1,0 +1,30 @@
+name: Pac-Man contribution graph
+
+on:
+  schedule:
+    - cron: "17 3 * * *"   # once a day
+  workflow_dispatch:        # "Run workflow" button
+  push:
+    branches: [main]
+
+permissions:
+  contents: write           # publishes the pictures to the pacman-output branch
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Draw the contribution graph
+        uses: abozanona/pacman-contribution-graph@main
+        with:
+          github_user_name: ${{ github.repository_owner }}
+          games: pacman
+
+      - name: Publish it to the pacman-output branch
+        uses: crazy-max/ghaction-github-pages@v3.1.0
+        with:
+          target_branch: pacman-output
+          build_dir: dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
