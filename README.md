@@ -22,10 +22,6 @@
 
 <h3 align="center">Contribution Activity</h3>
 
-<div align="center">
-<picture>
-<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/baselnasser99/baselnasser99/pacman-output/pacman-contribution-graph-dark.svg" />
-<source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/baselnasser99/baselnasser99/pacman-output/pacman-contribution-graph.svg" />
+<p align="center">
 <img alt="Pac-Man eating my GitHub contribution graph" src="https://raw.githubusercontent.com/baselnasser99/baselnasser99/pacman-output/pacman-contribution-graph-dark.svg" />
-</picture>
-</div>
+</p>
