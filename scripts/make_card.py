@@ -29,7 +29,7 @@ TYPED = ["open to co-op roles", "product · consulting · data", "let's build so
 PROMPT = "PS C:\\Users\\basel>"
 
 W, H = 900, 480
-BG, BAR, RED, GREEN, BLUE, WHITE, GREY = "#0c0c0c", "#202020", "#f85149", "#39d353", "#58a6ff", "#e6edf3", "#a0a0a0"
+BG, BAR, RED, GREEN, BLUE, WHITE, GREY = "#0c0c0c", "#202020", "#c9735f", "#6a9f6a", "#58a6ff", "#e6edf3", "#a0a0a0"
 FONT = "'Cascadia Mono', Consolas, ui-monospace, Menlo, 'Liberation Mono', monospace"
 CHAR_W = 7.8  # width of one 13px monospace character
 ART_BOX = (30, 50, 360, 360)  # x, y, width, height available for the face
