@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent
 USER = "basel@github"
 FACTS = [
     ("Role", "MS Information Systems student"),
-    ("Focus", "product management · IT consulting"),
+    ("Focus", "Product Management · IT Consulting"),
     ("School", "Northeastern University, Vancouver (Jan 2027)"),
     ("Degree", "B.Sc. Computer Science Engineering, Pécs (HU)"),
     ("Thesis", "Data Tagging Application"),
@@ -94,8 +94,8 @@ def build(art):
                     f'xml:space="preserve">{escape(line)}</text>')
 
     info_x = 420
-    rows.append(f'<text x="{info_x}" y="74" font-size="16" font-weight="700" fill="{RED}">{USER}</text>')
-    rows.append(f'<line x1="{info_x}" y1="84" x2="{W - 30}" y2="84" stroke="{RED}" stroke-width="1"/>')
+    rows.append(f'<text x="{info_x}" y="74" font-size="16" font-weight="700" fill="{WHITE}">{USER}</text>')
+    rows.append(f'<line x1="{info_x}" y1="84" x2="{W - 30}" y2="84" stroke="{GREY}" stroke-width="1"/>')
     for i, (key, value) in enumerate(FACTS):
         rows.append(f'<text x="{info_x}" y="{106 + i * 20}" font-size="13">'
                     f'<tspan fill="{WHITE}" font-weight="700">{escape(key)}:</tspan> '
