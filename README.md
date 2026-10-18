@@ -15,7 +15,7 @@
 <h3 align="center">Tech Stack & Tools</h3>
 
 <p align="center">
-<img src="https://skillicons.dev/icons?i=python,flask,mysql,sqlite,docker,githubactions,git,github,html,css,js&perline=6" alt="Python, Flask, MySQL, SQLite, Docker, GitHub Actions, Git, GitHub, HTML, CSS, JavaScript" />
+<img src="assets/tech-stack.svg" alt="Python, Flask, MySQL, SQLite, Docker, GitHub Actions, Git, GitHub, HTML, CSS, JavaScript" />
 </p>
 
 ---
