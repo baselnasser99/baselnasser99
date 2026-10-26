@@ -21,7 +21,7 @@ My thesis: a web app that splits data-labelling work fairly across a team, even 
 <img src="https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white" alt="Flask"/>
 <img src="https://img.shields.io/badge/MySQL-000000?style=for-the-badge&logo=mysql&logoColor=4479A1" alt="MySQL"/>
 <img src="https://img.shields.io/badge/Docker-000000?style=for-the-badge&logo=docker&logoColor=2496ED" alt="Docker"/>
-<img src="https://img.shields.io/badge/250%2B_tests-000000?style=for-the-badge&logo=pytest&logoColor=0A9EDC" alt="250+ tests"/>
+<img src="https://img.shields.io/badge/300%2B_tests-000000?style=for-the-badge&logo=pytest&logoColor=0A9EDC" alt="300+ tests"/>
 <img src="https://img.shields.io/badge/~94%25_coverage-000000?style=for-the-badge&logo=githubactions&logoColor=2088FF" alt="About 94% test coverage"/>
 </p>
 
