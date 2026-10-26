@@ -11,7 +11,9 @@ from make_card import BAR, BG, BLUE, BORDER, BOX, CHAR_W, FONT, GREEN, GREY, PAL
 
 W, H = 440, 290
 _PREVIEW = "https://raw.githubusercontent.com/baselnasser99/Data-Tagging-Application/HEAD/docs/preview/"
-THESIS_PREVIEW = {"dark": _PREVIEW + "preview@2x-dark.png", "light": _PREVIEW + "preview@2x.png"}
+# (screenshot, logo ink): the ink is the app's --ink token for that theme, from docs/preview/preview.html
+THESIS_PREVIEW = {"dark": (_PREVIEW + "preview@2x-dark.png", "#E6EAF0"), "light": (_PREVIEW + "preview@2x.png", "#1C2733")}
+PREVIEW_CSS_W = 1280  # the preview page's width in CSS pixels; its logo is 28 of them
 PROJECTS = [
     {
         "slug": "data-tagging",
@@ -57,7 +59,46 @@ def title_bar(name, w=W):
             f'<path d="M{right + 68 + 11} 15l11 11m0-11l-11 11" stroke="{WHITE}" stroke-width="1"/>')
 
 
-def banner(name, url, w=900, px=1800):
+def moved_tasks(img):
+    """Find the yellow 'moved to them' squares in the screenshot's chart, as (x, y, size, row) in image pixels."""
+    import numpy as np
+
+    a = np.asarray(img).astype(int)
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    mask = (r > 200) & (g > 150) & (b < 110) & (r - b > 120)
+    mask[:, :img.width // 2] = False  # the chart is on the right; the left has the yellow "fairly" highlight
+    cells = []
+    ys = np.where(mask.any(1))[0]
+    for row, band in enumerate(np.split(ys, np.where(np.diff(ys) > 1)[0] + 1)):
+        xs = np.where(mask[band[0]:band[-1] + 1].any(0))[0]
+        for seg in np.split(xs, np.where(np.diff(xs) > 1)[0] + 1):
+            if seg[-1] - seg[0] >= img.width / 120:  # task squares only: skips the "just joined" label and the legend
+                cells.append((seg[0], band[0], band[-1] - band[0] + 1, row))
+    return cells
+
+
+def live_logo(img, k, ink):
+    """Cover the screenshot's logo and redraw it on top, moving like the app's own top-bar logo (app.css):
+    the brackets close in on the yellow square and let go, like an item being tagged."""
+    import numpy as np
+
+    a = np.asarray(img).astype(int)
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    mask = (r > 200) & (g > 150) & (b < 110) & (r - b > 120)
+    mask[int(img.height * 0.3):, :] = False
+    mask[:, int(img.width * 0.15):] = False  # the logo sits top left
+    ys, xs = np.where(mask)
+    cx, cy = xs.mean() + 0.5, ys.mean() + 0.5  # centre of the yellow square, which is the logo's centre
+    u = img.width / PREVIEW_CSS_W  # image pixels per logo unit (the logo is 28 units)
+    bg = "#%02x%02x%02x" % tuple(a[int(cy - 20 * u), int(cx - 20 * u)])
+    x, y, size = (cx - 14 * u) * k, 34 + (cy - 14 * u) * k, 28 * u * k
+    return (f'<rect x="{x - 1:.1f}" y="{y - 1:.1f}" width="{size + 2:.1f}" height="{size + 2:.1f}" fill="{bg}"/>'
+            f'<g transform="translate({x:.2f} {y:.2f}) scale({u * k:.4f})">'
+            f'<path class="select" d="M2 9V2h7M19 2h7v7M26 19v7h-7M9 26H2v-7" fill="none" stroke="{ink}" stroke-width="2.5" stroke-linecap="square"/>'
+            f'<rect class="tag" x="10" y="10" width="8" height="8" rx="1" fill="#F5CF3A"/></g>')
+
+
+def banner(name, url, ink, w=900, px=1800):
     """The thesis screenshot inside a terminal window. GitHub blocks images that an SVG loads from elsewhere,
     so the screenshot is downloaded and embedded; rerun this when the thesis preview changes."""
     import base64, io, urllib.request
@@ -69,12 +110,28 @@ def banner(name, url, w=900, px=1800):
     img.quantize(256, dither=Image.Dither.NONE).save(buf, "PNG", optimize=True)  # flat UI colours: a third of the size
     data = base64.b64encode(buf.getvalue()).decode()
     h = 34 + round(w * img.height / img.width)
+    k = w / img.width
+    # the moved tasks glow one row after another, as if they were being handed out again
+    glow = "".join(f'<rect class="glow" style="animation-delay:{row * 0.18:.2f}s" x="{x * k:.1f}" y="{34 + y * k:.1f}" '
+                   f'width="{s * k:.1f}" height="{s * k:.1f}" rx="{1.5 * s * k / 10:.1f}"/>' for x, y, s, row in moved_tasks(img))
     return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" aria-label="{escape(name)}: labelling work, shared fairly. Open tasks per person stay within one task of each other after one person leaves and another joins.">
-<style>text {{ font-family: {FONT}; }}</style>
+<style>
+text {{ font-family: {FONT}; }}
+.glow {{ fill: #fff; opacity: 0; animation: glow 4.5s ease-in-out infinite; }}
+@keyframes glow {{ 0%, 30%, 100% {{ opacity: 0; }} 12% {{ opacity: 0.55; }} }}
+.select, .tag {{ transform-box: fill-box; transform-origin: center; }}
+.select {{ animation: mark-select 7s cubic-bezier(.65, 0, .35, 1) infinite; }}
+.tag {{ animation: mark-tag 7s cubic-bezier(.65, 0, .35, 1) infinite; }}
+@keyframes mark-select {{ 0%, 55%, 100% {{ transform: scale(1); }} 70%, 80% {{ transform: scale(.82); }} }}
+@keyframes mark-tag {{ 0%, 62%, 100% {{ transform: scale(1); }} 74% {{ transform: scale(1.12); }} 82% {{ transform: scale(1); }} }}
+@media (prefers-reduced-motion: reduce) {{ .glow, .select, .tag {{ animation: none; }} }}
+</style>
 <clipPath id="window"><rect width="{w}" height="{h}" rx="8"/></clipPath>
 <g clip-path="url(#window)">
 <rect width="{w}" height="{h}" fill="{BG}"/>
 <image x="0" y="34" width="{w}" height="{h - 34}" href="data:image/png;base64,{data}"/>
+{glow}
+{live_logo(img, k, ink)}
 {title_bar(name, w)}
 </g>
 <rect x="0.5" y="0.5" width="{w - 1}" height="{h - 1}" rx="8" fill="none" stroke="{BORDER}"/>
@@ -143,7 +200,7 @@ if __name__ == "__main__":
             out = ROOT / "assets" / f"project-{p['slug']}{SUFFIX[theme]}.svg"
             out.write_text(svg, encoding="utf-8")
             print(f"wrote {out}")
-        svg = banner("Data-Tagging-Application", THESIS_PREVIEW[theme])
+        svg = banner("Data-Tagging-Application", *THESIS_PREVIEW[theme])
         xml.dom.minidom.parseString(svg)
         out = ROOT / "assets" / f"thesis-banner{SUFFIX[theme]}.svg"
         out.write_text(svg, encoding="utf-8")
