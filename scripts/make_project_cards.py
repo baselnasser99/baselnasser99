@@ -1,6 +1,6 @@
-"""Build assets/project-*.svg: small terminal windows for each project, matching profile.svg.
+"""Build assets/project-*.svg and thesis-banner*.svg: terminal windows for each project, matching profile.svg.
 
-Run:  python scripts/make_project_cards.py   (no dependencies)
+Run:  python scripts/make_project_cards.py   (needs Pillow and network access, for the thesis screenshot)
 """
 import xml.dom.minidom
 from pathlib import Path
@@ -10,6 +10,8 @@ import make_card
 from make_card import BAR, BG, BLUE, BORDER, BOX, CHAR_W, FONT, GREEN, GREY, PALETTES, ROOT, SUFFIX, WHITE, YELLOW, typing
 
 W, H = 440, 290
+_PREVIEW = "https://raw.githubusercontent.com/baselnasser99/Data-Tagging-Application/HEAD/docs/preview/"
+THESIS_PREVIEW = {"dark": _PREVIEW + "preview@2x-dark.png", "light": _PREVIEW + "preview@2x.png"}
 PROJECTS = [
     {
         "slug": "data-tagging",
@@ -43,16 +45,41 @@ PROJECTS = [
 ]
 
 
-def title_bar(name):
-    tab_w = min(len(name) * 7 + 70, W - 160)
-    right = W - 34 * 3
-    return (f'<path d="M8 0h{W - 16}a8 8 0 0 1 8 8v26H0V8a8 8 0 0 1 8-8z" fill="{BAR}"/>'
+def title_bar(name, w=W):
+    tab_w = min(len(name) * 7 + 70, w - 160)
+    right = w - 34 * 3
+    return (f'<path d="M8 0h{w - 16}a8 8 0 0 1 8 8v26H0V8a8 8 0 0 1 8-8z" fill="{BAR}"/>'
             f'<path d="M8 34V14a6 6 0 0 1 6-6h{tab_w}a6 6 0 0 1 6 6v20z" fill="{BG}"/>'
             f'<text x="22" y="26" font-size="12" fill="{GREEN}" font-weight="700">&gt;_</text>'
             f'<text x="44" y="26" font-size="12" fill="{WHITE}">{escape(name)}</text>'
             f'<path d="M{right + 11} 21h12" stroke="{WHITE}" stroke-width="1"/>'
             f'<rect x="{right + 34 + 11.5}" y="15.5" width="11" height="11" fill="none" stroke="{WHITE}" stroke-width="1"/>'
             f'<path d="M{right + 68 + 11} 15l11 11m0-11l-11 11" stroke="{WHITE}" stroke-width="1"/>')
+
+
+def banner(name, url, w=900, px=1800):
+    """The thesis screenshot inside a terminal window. GitHub blocks images that an SVG loads from elsewhere,
+    so the screenshot is downloaded and embedded; rerun this when the thesis preview changes."""
+    import base64, io, urllib.request
+    from PIL import Image
+
+    img = Image.open(io.BytesIO(urllib.request.urlopen(url, timeout=30).read())).convert("RGB")
+    img = img.resize((px, round(px * img.height / img.width)), Image.LANCZOS)  # 2x the shown width stays sharp
+    buf = io.BytesIO()
+    img.quantize(256, dither=Image.Dither.NONE).save(buf, "PNG", optimize=True)  # flat UI colours: a third of the size
+    data = base64.b64encode(buf.getvalue()).decode()
+    h = 34 + round(w * img.height / img.width)
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" aria-label="{escape(name)}: labelling work, shared fairly. Open tasks per person stay within one task of each other after one person leaves and another joins.">
+<style>text {{ font-family: {FONT}; }}</style>
+<clipPath id="window"><rect width="{w}" height="{h}" rx="8"/></clipPath>
+<g clip-path="url(#window)">
+<rect width="{w}" height="{h}" fill="{BG}"/>
+<image x="0" y="34" width="{w}" height="{h - 34}" href="data:image/png;base64,{data}"/>
+{title_bar(name, w)}
+</g>
+<rect x="0.5" y="0.5" width="{w - 1}" height="{h - 1}" rx="8" fill="none" stroke="{BORDER}"/>
+</svg>
+"""
 
 
 def build(p):
@@ -116,3 +143,8 @@ if __name__ == "__main__":
             out = ROOT / "assets" / f"project-{p['slug']}{SUFFIX[theme]}.svg"
             out.write_text(svg, encoding="utf-8")
             print(f"wrote {out}")
+        svg = banner("Data-Tagging-Application", THESIS_PREVIEW[theme])
+        xml.dom.minidom.parseString(svg)
+        out = ROOT / "assets" / f"thesis-banner{SUFFIX[theme]}.svg"
+        out.write_text(svg, encoding="utf-8")
+        print(f"wrote {out} ({out.stat().st_size // 1024} KB)")

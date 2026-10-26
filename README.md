@@ -18,17 +18,13 @@ Starting my MS in Information Systems at Northeastern, Vancouver, in 2027.
 <h3 align="center">Projects</h3>
 
 <p align="center">
-<a href="https://github.com/baselnasser99/Data-Tagging-Application"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/project-data-tagging.svg"><img src="assets/project-data-tagging-light.svg" alt="Data-Tagging-Application, shipped: fair split of labelling work, rebalanced live as people come and go. Flask, MySQL, Docker, 300+ tests" width="49%" /></picture></a>
-<a href="https://github.com/baselnasser99/second-order"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/project-second-order.svg"><img src="assets/project-second-order-light.svg" alt="second-order, in progress: why Olist customers don't buy twice. BigQuery, dbt, SQL, Python" width="49%" /></picture></a>
+<a href="https://github.com/baselnasser99/Data-Tagging-Application"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/thesis-banner.svg"><img src="assets/thesis-banner-light.svg" alt="Data Tagging: labelling work, shared fairly. Open tasks per person stay within one task of each other after one person leaves and another joins." width="100%" /></picture></a>
+<br><sub>Featured: <a href="https://github.com/baselnasser99/Data-Tagging-Application"><b>Data-Tagging-Application</b></a>, my bachelor's thesis</sub>
 </p>
 
 <p align="center">
-<a href="https://github.com/baselnasser99/Data-Tagging-Application">
-<picture>
-<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/baselnasser99/Data-Tagging-Application/HEAD/docs/preview/preview@2x-dark.png">
-<img src="https://raw.githubusercontent.com/baselnasser99/Data-Tagging-Application/HEAD/docs/preview/preview@2x.png" alt="Data Tagging: open tasks per person, rebalanced after one person leaves the group and another joins" width="100%">
-</picture>
-</a>
+<a href="https://github.com/baselnasser99/Data-Tagging-Application"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/project-data-tagging.svg"><img src="assets/project-data-tagging-light.svg" alt="Data-Tagging-Application, shipped: fair split of labelling work, rebalanced live as people come and go. Flask, MySQL, Docker, 300+ tests" width="49%" /></picture></a>
+<a href="https://github.com/baselnasser99/second-order"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/project-second-order.svg"><img src="assets/project-second-order-light.svg" alt="second-order, in progress: why Olist customers don't buy twice. BigQuery, dbt, SQL, Python" width="49%" /></picture></a>
 </p>
 
 ---
