@@ -1,56 +1,66 @@
-"""Build assets/tech-stack.svg: skill icons that float gently, one after another.
+"""Build assets/tech-stack.svg and tech-stack-light.svg: my tools by folder, one-colour logos that float gently.
 
-Run:  python scripts/make_icons.py path/to/skill-icons/icons
-(icons from https://github.com/tandpfun/skill-icons, MIT licence)
+Run:  python scripts/make_icons.py path/to/simple-icons/icons
+(icons from https://github.com/simple-icons/simple-icons, CC0)
+
+The background is transparent, so there is one file per GitHub theme; the README picks with <picture>.
 """
 import re
 import sys
+import xml.dom.minidom
 from pathlib import Path
+from xml.sax.saxutils import escape
 
-ICONS = ["Python-Dark", "Flask-Dark", "MySQL-Dark", "SQLite", "Docker", "GithubActions-Dark",
-         "Git", "Github-Dark", "HTML", "CSS", "JavaScript"]
-PER_LINE = 6
-CELL, SIZE = 300, 256  # same spacing as skillicons.dev
-SHOWN_PX = 52          # on-screen width of one cell
+from make_card import FONT, ROOT
 
-
-def icon(path, n, x, y):
-    body = re.sub(r"^.*?<svg[^>]*>|</svg>\s*$", "", Path(path).read_text(), flags=re.S)
-    # several icons reuse the same ids (gradients, clips); prefix them so they don't clash
-    body = re.sub(r'id="([^"]+)"', rf'id="i{n}-\1"', body)
-    body = re.sub(r'url\(#([^)]+)\)', rf'url(#i{n}-\1)', body)
-    body = re.sub(r'href="#([^"]+)"', rf'href="#i{n}-\1"', body)
-    return (f'<g class="float" style="animation-delay:{n * 0.35:.2f}s">'
-            f'<svg x="{x}" y="{y}" width="{SIZE}" height="{SIZE}" viewBox="0 0 256 256">{body}</svg></g>')
+GROUPS = [
+    ("build", [("python", "python"), ("flask", "flask"), ("sqlalchemy", "sqlalchemy")]),
+    ("data", [("mysql", "mysql"), ("sqlite", "sqlite"), ("googlebigquery", "bigquery"), ("dbt", "dbt")]),
+    ("ship", [("docker", "docker"), ("githubactions", "github actions"), ("pytest", "pytest")]),
+]
+# (logo, tool name, folder name) per theme: GitHub's own greens, inks and blues
+THEMES = {"tech-stack": ("#56d364", "#e6edf3", "#58a6ff"), "tech-stack-light": ("#116329", "#1f2328", "#0969da")}
+W, ROW, ICON = 900, 62, 30
+LABEL_W, ITEM_W = 150, 182
 
 
-def build(folder):
-    rows = -(-len(ICONS) // PER_LINE)
-    width, height = PER_LINE * CELL - (CELL - SIZE), rows * CELL - (CELL - SIZE) + 24  # room to float
-    parts = []
-    for n, name in enumerate(ICONS):
-        row, col = divmod(n, PER_LINE)
-        left = (PER_LINE - min(PER_LINE, len(ICONS) - row * PER_LINE)) * CELL / 2  # centre a short last row
-        parts.append(icon(Path(folder) / f"{name}.svg", n, left + col * CELL, 12 + row * CELL))
-    scale = SHOWN_PX / CELL
-    return f"""<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{width * scale:.0f}" height="{height * scale:.0f}" viewBox="0 0 {width} {height}" role="img" aria-label="Python, Flask, MySQL, SQLite, Docker, GitHub Actions, Git, GitHub, HTML, CSS, JavaScript">
-<!-- Icons: skill-icons by tandpfun, MIT licence, https://github.com/tandpfun/skill-icons -->
+def icon_path(folder, slug):
+    return re.search(r'<path d="([^"]+)"', Path(folder, f"{slug}.svg").read_text(encoding="utf-8")).group(1)
+
+
+def build(folder, logo, ink, accent):
+    height = len(GROUPS) * ROW
+    rows, n = [], 0
+    for r, (group, items) in enumerate(GROUPS):
+        y = 10 + r * ROW
+        rows.append(f'<text x="24" y="{y + 21}" fill="{accent}" font-weight="700">{escape(group)}/</text>')
+        for c, (slug, label) in enumerate(items):
+            x = 24 + LABEL_W + c * ITEM_W
+            scale = ICON / 24  # simple-icons are drawn on a 24px grid
+            rows.append(f'<g class="float" style="animation-delay:{n * 0.3:.1f}s">'
+                        f'<path transform="translate({x} {y}) scale({scale:.3f})" fill="{logo}" d="{icon_path(folder, slug)}"/></g>'
+                        f'<text x="{x + ICON + 12}" y="{y + 21}" fill="{ink}" font-weight="600">{escape(label)}</text>')
+            n += 1
+    names = ", ".join(label for _, items in GROUPS for _, label in items)
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {height}" width="{W}" height="{height}" font-size="15" role="img" aria-label="Tech stack: {escape(names)}">
+<!-- Logos: Simple Icons, CC0, https://github.com/simple-icons/simple-icons -->
 <style>
+text {{ font-family: {FONT}; }}
 .float {{ animation: float 4s ease-in-out infinite; }}
-@keyframes float {{ 0%, 100% {{ transform: translateY(0); }} 50% {{ transform: translateY(-10px); }} }}
+@keyframes float {{ 0%, 100% {{ transform: translateY(0); }} 50% {{ transform: translateY(-3px); }} }}
 @media (prefers-reduced-motion: reduce) {{ .float {{ animation: none; }} }}
 </style>
-{''.join(parts)}
+{''.join(rows)}
 </svg>
 """
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        sys.exit("usage: python scripts/make_icons.py path/to/skill-icons/icons")
-    svg = build(sys.argv[1])
-    import xml.dom.minidom
-    xml.dom.minidom.parseString(svg)  # self-check: invalid XML would show as a broken image on GitHub
-    out = Path(__file__).resolve().parent.parent / "assets" / "tech-stack.svg"
-    out.write_text(svg, encoding="utf-8")
-    print(f"wrote {out} ({out.stat().st_size // 1024} KB)")
+        sys.exit("usage: python scripts/make_icons.py path/to/simple-icons/icons")
+    for name, colours in THEMES.items():
+        svg = build(sys.argv[1], *colours)
+        xml.dom.minidom.parseString(svg)  # self-check: invalid XML would show as a broken image on GitHub
+        out = ROOT / "assets" / f"{name}.svg"
+        out.write_text(svg, encoding="utf-8")
+        print(f"wrote {out} ({out.stat().st_size // 1024} KB)")

@@ -46,7 +46,10 @@ Starting my MS in Information Systems at Northeastern, Vancouver, in 2027.
 <h3 align="center">Tech Stack & Tools</h3>
 
 <p align="center">
-<img src="assets/tech-stack.svg" alt="Python, Flask, MySQL, SQLite, Docker, GitHub Actions, Git, GitHub, HTML, CSS, JavaScript" />
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/tech-stack.svg">
+<img src="assets/tech-stack-light.svg" alt="Tech stack. Build: Python, Flask, SQLAlchemy. Data: MySQL, SQLite, BigQuery, dbt. Ship: Docker, GitHub Actions, pytest" width="100%" />
+</picture>
 </p>
 
 ---
