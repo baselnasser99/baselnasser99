@@ -25,11 +25,14 @@ FACTS = [
     ("Email", "baselnasser99@gmail.com"),
     ("Email.School", "nasser.b@northeastern.edu"),
 ]
-TYPED = ["open to co-op roles", "product · consulting · data", "let's build something useful"]
+NOW = ("Now", "building second-order")
+ROUTE = [("ps", "Palestine", "home"), ("hu", "Pécs, HU", "B.Sc."), ("ca", "Vancouver, CA", "MS, 2027")]
+TYPED = ["product · consulting · data", "let's build something useful"]
 PROMPT = "PS C:\\Users\\basel>"
 
 W, H = 900, 480
-BG, BAR, RED, GREEN, BLUE, WHITE, GREY = "#0c0c0c", "#202020", "#c9735f", "#6a9f6a", "#58a6ff", "#e6edf3", "#a0a0a0"
+BG, BAR, RED, GREEN, BLUE, WHITE, GREY = "#0c0c0c", "#202020", "#c9735f", "#56d364", "#58a6ff", "#e6edf3", "#a0a0a0"
+YELLOW = "#d29922"
 FONT = "'Cascadia Mono', Consolas, ui-monospace, Menlo, 'Liberation Mono', monospace"
 CHAR_W = 7.8  # width of one 13px monospace character
 ART_BOX = (30, 50, 360, 360)  # x, y, width, height available for the face
@@ -81,6 +84,44 @@ def title_bar():
     return (f'<path d="M8 0h{W - 16}a8 8 0 0 1 8 8v26H0V8a8 8 0 0 1 8-8z" fill="{BAR}"/>' + tab + controls)
 
 
+def flag(name, x, y, w=18, h=12):
+    """Tiny flat flags, drawn in SVG so no external images are needed."""
+    if name == "ps":
+        s = h / 3
+        body = (f'<rect x="{x}" y="{y}" width="{w}" height="{s}" fill="#000"/>'
+                f'<rect x="{x}" y="{y + s}" width="{w}" height="{s}" fill="#fff"/>'
+                f'<rect x="{x}" y="{y + 2 * s}" width="{w}" height="{s}" fill="#007a3d"/>'
+                f'<path d="M{x} {y}L{x + w / 2} {y + h / 2}L{x} {y + h}z" fill="#ce1126"/>')
+    elif name == "hu":
+        s = h / 3
+        body = (f'<rect x="{x}" y="{y}" width="{w}" height="{s}" fill="#ce2939"/>'
+                f'<rect x="{x}" y="{y + s}" width="{w}" height="{s}" fill="#fff"/>'
+                f'<rect x="{x}" y="{y + 2 * s}" width="{w}" height="{s}" fill="#477050"/>')
+    else:  # ca: red, white, red with a small leaf
+        q = w / 4
+        cx, cy = x + w / 2, y + h / 2
+        body = (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#d52b1e"/>'
+                f'<rect x="{x + q}" y="{y}" width="{2 * q}" height="{h}" fill="#fff"/>'
+                f'<path d="M{cx} {cy - 4}L{cx + 1.2} {cy - 1.5}L{cx + 3.5} {cy - 2.2}L{cx + 2.4} {cy + 0.5}L{cx + 3.2} {cy + 1.4}'
+                f'L{cx + 0.5} {cy + 1.6}L{cx + 0.5} {cy + 4}L{cx - 0.5} {cy + 4}L{cx - 0.5} {cy + 1.6}L{cx - 3.2} {cy + 1.4}'
+                f'L{cx - 2.4} {cy + 0.5}L{cx - 3.5} {cy - 2.2}L{cx - 1.2} {cy - 1.5}z" fill="#d52b1e"/>')
+    return body + f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="none" stroke="#3a3a3a" stroke-width="0.6"/>'
+
+
+def route(y):
+    """Home, then degree, then master's: flags on a dashed line, with a dot travelling along it."""
+    xs = [455, 635, 815]
+    out = [f'<path d="M{xs[0]} {y}H{xs[-1]}" stroke="{GREY}" stroke-width="1" stroke-dasharray="3 4"/>']
+    for x, (code, place, note) in zip(xs, ROUTE):
+        out.append(flag(code, x - 9, y - 26))
+        out.append(f'<circle cx="{x}" cy="{y}" r="3.5" fill="{BG}" stroke="{GREEN}" stroke-width="1.5"/>')
+        out.append(f'<text x="{x}" y="{y + 20}" text-anchor="middle" fill="{WHITE}">{escape(place)}</text>')
+        out.append(f'<text x="{x}" y="{y + 36}" text-anchor="middle" font-size="11" fill="{GREY}">{escape(note)}</text>')
+    out.append(f'<circle r="3" fill="{GREEN}"><animateMotion path="M{xs[0]} {y}H{xs[-1]}" dur="5s" repeatCount="indefinite"/>'
+               f'<animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="5s" repeatCount="indefinite"/></circle>')
+    return "".join(out)
+
+
 def build(art):
     rows = []
     box_x, box_y, box_w, box_h = ART_BOX
@@ -100,9 +141,14 @@ def build(art):
         rows.append(f'<text x="{info_x}" y="{106 + i * 20}" font-size="13">'
                     f'<tspan fill="{WHITE}" font-weight="700">{escape(key)}:</tspan> '
                     f'<tspan fill="{GREEN}">{escape(value)}</tspan></text>')
-    swatch_y = 106 + len(FACTS) * 20 - 4
-    for i, colour in enumerate(["#21262d", RED, "#3fb950", "#d29922", BLUE, "#bc8cff", "#39c5cf", WHITE]):
-        rows.append(f'<rect x="{info_x + i * 26}" y="{swatch_y}" width="18" height="18" rx="2" fill="{colour}"/>')
+    status_y = 106 + len(FACTS) * 20
+    key, value = NOW
+    rows.append(f'<text x="{info_x}" y="{status_y}" font-size="13"><tspan fill="{WHITE}" font-weight="700">{escape(key)}:</tspan> '
+                f'<tspan fill="{GREEN}">{escape(value)}</tspan></text>')
+    dot_x = info_x + (len(key) + len(value) + 3) * CHAR_W
+    rows.append(f'<circle cx="{dot_x:.1f}" cy="{status_y - 4.5}" r="4" fill="{YELLOW}">'
+                f'<animate attributeName="opacity" values="1;0.25;1" dur="1.6s" repeatCount="indefinite"/></circle>')
+    rows.append(route(status_y + 46))
 
     prompt_y = H - 28
     rows.append(f'<text x="30" y="{prompt_y}" font-size="13" fill="{GREY}">{escape(PROMPT)}</text>')

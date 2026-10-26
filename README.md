@@ -8,21 +8,27 @@
 <code>Product Management</code> &nbsp; <code>IT Consulting</code> &nbsp; <code>Data Analysis</code>
 </p>
 
+<p align="center">
+I turn messy team and business problems into software people use.<br>
+Starting my MS in Information Systems at Northeastern, Vancouver, in 2027.
+</p>
+
 ---
 
-<h3 align="center">Featured Project</h3>
+<h3 align="center">Projects</h3>
 
 <p align="center">
-<a href="https://github.com/baselnasser99/Data-Tagging-Application"><b>Data-Tagging-Application</b></a><br>
-My thesis: a web app that splits data-labelling work fairly across a team, even as people join or leave.
+<a href="https://github.com/baselnasser99/Data-Tagging-Application"><img src="assets/project-data-tagging.svg" alt="Data-Tagging-Application, shipped: fair split of labelling work, rebalanced live as people come and go. Flask, MySQL, Docker, 300+ tests" width="49%" /></a>
+<a href="https://github.com/baselnasser99/second-order"><img src="assets/project-second-order.svg" alt="second-order, in progress: why Olist customers don't buy twice. BigQuery, dbt, SQL, Python" width="49%" /></a>
 </p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white" alt="Flask"/>
-<img src="https://img.shields.io/badge/MySQL-000000?style=for-the-badge&logo=mysql&logoColor=4479A1" alt="MySQL"/>
-<img src="https://img.shields.io/badge/Docker-000000?style=for-the-badge&logo=docker&logoColor=2496ED" alt="Docker"/>
-<img src="https://img.shields.io/badge/300%2B_tests-000000?style=for-the-badge&logo=pytest&logoColor=0A9EDC" alt="300+ tests"/>
-<img src="https://img.shields.io/badge/~94%25_coverage-000000?style=for-the-badge&logo=githubactions&logoColor=2088FF" alt="About 94% test coverage"/>
+<a href="https://github.com/baselnasser99/Data-Tagging-Application">
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/baselnasser99/Data-Tagging-Application/HEAD/docs/preview/preview@2x-dark.png">
+<img src="https://raw.githubusercontent.com/baselnasser99/Data-Tagging-Application/HEAD/docs/preview/preview@2x.png" alt="Data Tagging: open tasks per person, rebalanced after one person leaves the group and another joins" width="100%">
+</picture>
+</a>
 </p>
 
 ---
@@ -48,5 +54,8 @@ My thesis: a web app that splits data-labelling work fairly across a team, even 
 <h3 align="center">Contribution Activity</h3>
 
 <p align="center">
-<img alt="Pac-Man eating my GitHub contribution graph" src="https://raw.githubusercontent.com/baselnasser99/baselnasser99/pacman-output/pacman-contribution-graph-dark.svg" />
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/baselnasser99/baselnasser99/pacman-output/pacman-contribution-graph-dark.svg">
+<img alt="Pac-Man eating my GitHub contribution graph" src="https://raw.githubusercontent.com/baselnasser99/baselnasser99/pacman-output/pacman-contribution-graph.svg" />
+</picture>
 </p>
