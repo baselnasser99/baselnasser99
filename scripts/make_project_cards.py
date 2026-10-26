@@ -6,10 +6,10 @@ import xml.dom.minidom
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-from make_card import BAR, BG, BLUE, CHAR_W, FONT, GREEN, GREY, ROOT, WHITE, typing
+import make_card
+from make_card import BAR, BG, BLUE, BORDER, BOX, CHAR_W, FONT, GREEN, GREY, PALETTES, ROOT, SUFFIX, WHITE, YELLOW, typing
 
 W, H = 440, 290
-YELLOW = "#d29922"
 PROJECTS = [
     {
         "slug": "data-tagging",
@@ -75,7 +75,7 @@ def build(p):
         x = 24
         for i, step in enumerate(p["flow"]):
             w = len(step) * CHAR_W + 20
-            rows.append(f'<rect x="{x}" y="{base - 30}" width="{w:.1f}" height="28" rx="4" fill="#161b22" stroke="{GREY}" stroke-width="0.8"/>'
+            rows.append(f'<rect x="{x}" y="{base - 30}" width="{w:.1f}" height="28" rx="4" fill="{BOX}" stroke="{GREY}" stroke-width="0.8"/>'
                         f'<text x="{x + w / 2:.1f}" y="{base - 11}" text-anchor="middle" fill="{BLUE if i == len(p["flow"]) - 1 else WHITE}">{escape(step)}</text>')
             x += w
             if i < len(p["flow"]) - 1:
@@ -96,7 +96,7 @@ def build(p):
 
     return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" font-size="13" role="img" aria-label="{escape(p['name'])}: {escape(p['facts'][0][1])}">
 <style>text {{ font-family: {FONT}; }}</style>
-<rect width="{W}" height="{H}" rx="8" fill="{BG}" stroke="#3a3a3a"/>
+<rect width="{W}" height="{H}" rx="8" fill="{BG}" stroke="{BORDER}"/>
 {title_bar(p['name'])}
 <rect width="0" height="0"><animate id="cycle" attributeName="opacity" begin="0s;cycle.end" dur="{total:.2f}s" values="1"/></rect>
 {''.join(rows)}
@@ -107,9 +107,12 @@ def build(p):
 
 
 if __name__ == "__main__":
-    for p in PROJECTS:
-        svg = build(p)
-        xml.dom.minidom.parseString(svg)  # self-check: invalid XML would show as a broken image on GitHub
-        out = ROOT / "assets" / f"project-{p['slug']}.svg"
-        out.write_text(svg, encoding="utf-8")
-        print(f"wrote {out}")
+    for theme in PALETTES:
+        make_card.use_palette(theme)  # typing() reads make_card's colours
+        make_card.use_palette(theme, globals())
+        for p in PROJECTS:
+            svg = build(p)
+            xml.dom.minidom.parseString(svg)  # self-check: invalid XML would show as a broken image on GitHub
+            out = ROOT / "assets" / f"project-{p['slug']}{SUFFIX[theme]}.svg"
+            out.write_text(svg, encoding="utf-8")
+            print(f"wrote {out}")

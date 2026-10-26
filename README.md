@@ -1,5 +1,5 @@
 <p align="center">
-<img src="assets/profile.svg" alt="Basel Nasser: MS Information Systems student at Northeastern University, Vancouver, focused on product management and IT consulting" width="100%" />
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/profile.svg"><img src="assets/profile-light.svg" alt="Basel Nasser: MS Information Systems student at Northeastern University, Vancouver, focused on product management and IT consulting" width="100%" /></picture>
 </p>
 
 <h3 align="center">Basel Nasser</h3>
@@ -18,8 +18,8 @@ Starting my MS in Information Systems at Northeastern, Vancouver, in 2027.
 <h3 align="center">Projects</h3>
 
 <p align="center">
-<a href="https://github.com/baselnasser99/Data-Tagging-Application"><img src="assets/project-data-tagging.svg" alt="Data-Tagging-Application, shipped: fair split of labelling work, rebalanced live as people come and go. Flask, MySQL, Docker, 300+ tests" width="49%" /></a>
-<a href="https://github.com/baselnasser99/second-order"><img src="assets/project-second-order.svg" alt="second-order, in progress: why Olist customers don't buy twice. BigQuery, dbt, SQL, Python" width="49%" /></a>
+<a href="https://github.com/baselnasser99/Data-Tagging-Application"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/project-data-tagging.svg"><img src="assets/project-data-tagging-light.svg" alt="Data-Tagging-Application, shipped: fair split of labelling work, rebalanced live as people come and go. Flask, MySQL, Docker, 300+ tests" width="49%" /></picture></a>
+<a href="https://github.com/baselnasser99/second-order"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/project-second-order.svg"><img src="assets/project-second-order-light.svg" alt="second-order, in progress: why Olist customers don't buy twice. BigQuery, dbt, SQL, Python" width="49%" /></picture></a>
 </p>
 
 <p align="center">

@@ -32,15 +32,33 @@ TYPED = ["product · consulting · data", "let's build something useful"]
 PROMPT = "PS C:\\Users\\basel>"
 
 W, H = 900, 480
-BG, BAR, RED, GREEN, BLUE, WHITE, GREY = "#0c0c0c", "#202020", "#c9735f", "#56d364", "#58a6ff", "#e6edf3", "#a0a0a0"
-YELLOW = "#d29922"
+# One palette per GitHub theme; WHITE is the main ink and ART the face, whatever the theme.
+PALETTES = {
+    "dark": dict(BG="#0c0c0c", BAR="#202020", RED="#c9735f", GREEN="#56d364", BLUE="#58a6ff", WHITE="#e6edf3",
+                 GREY="#a0a0a0", YELLOW="#d29922", BORDER="#3a3a3a", BOX="#161b22", ART="#56d364"),
+    "light": dict(BG="#ffffff", BAR="#f3f4f6", RED="#cf222e", GREEN="#1a7f37", BLUE="#0969da", WHITE="#1f2328",
+                  GREY="#6e7781", YELLOW="#9a6700", BORDER="#d0d7de", BOX="#f6f8fa", ART="#1f2328"),
+}
+SUFFIX = {"dark": "", "light": "-light"}  # file name ending per theme
+
+
+def use_palette(name, namespace=None):
+    """Set the colour names in this module (or a module that imported them) to one theme's palette."""
+    (namespace if namespace is not None else globals()).update(PALETTES[name])
+
+
+BG = BAR = RED = GREEN = BLUE = WHITE = GREY = YELLOW = BORDER = BOX = ART = None  # filled by use_palette
+use_palette("dark")
 FONT = "'Cascadia Mono', Consolas, ui-monospace, Menlo, 'Liberation Mono', monospace"
 CHAR_W = 7.8  # width of one 13px monospace character
 ART_BOX = (30, 46, 360, 384)  # x, y, width, height available for the face
 
 
-def ascii_from_photo(path, cols=110):
-    """Bright pixels become dense characters (the card is dark); transparent pixels become spaces."""
+def ascii_from_photo(path, cols=110, invert=False):
+    """Bright pixels become dense characters (the card is dark); transparent pixels become spaces.
+
+    invert=True is for a light card: dark pixels (hair, beard, jacket) become dense instead, like pencil.
+    """
     import numpy as np
     from PIL import Image, ImageFilter
 
@@ -50,6 +68,8 @@ def ascii_from_photo(path, cols=110):
     img = img.crop((0, 0, img.width, int(img.height * 0.80)))  # head and shoulders
     rows = round(cols * img.height / img.width * 0.6 / 1.1)  # a character cell is 0.6 wide, 1.1 tall
     lum = np.asarray(img.convert("L"), float)
+    if invert:
+        lum = 255 - lum
     alpha = np.asarray(img.getchannel("A"), float) / 255
     blur = np.asarray(Image.fromarray(lum.astype("uint8")).filter(ImageFilter.GaussianBlur(img.width * 0.02)), float)
     lum += 0.6 * (lum - blur)  # local contrast: curls, brows and beard keep their detail
@@ -117,7 +137,7 @@ def flag(name, x, y, w=18, h=12):
                 f'<path d="M{cx} {cy - 4}L{cx + 1.2} {cy - 1.5}L{cx + 3.5} {cy - 2.2}L{cx + 2.4} {cy + 0.5}L{cx + 3.2} {cy + 1.4}'
                 f'L{cx + 0.5} {cy + 1.6}L{cx + 0.5} {cy + 4}L{cx - 0.5} {cy + 4}L{cx - 0.5} {cy + 1.6}L{cx - 3.2} {cy + 1.4}'
                 f'L{cx - 2.4} {cy + 0.5}L{cx - 3.5} {cy - 2.2}L{cx - 1.2} {cy - 1.5}z" fill="#d52b1e"/>')
-    return body + f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="none" stroke="#3a3a3a" stroke-width="0.6"/>'
+    return body + f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="none" stroke="{BORDER}" stroke-width="0.6"/>'
 
 
 def route(y):
@@ -145,7 +165,7 @@ def build(art):
     art_x = box_x + (box_w - cols * char_w) / 2
     art_y = box_y + (box_h - len(art) * line_h) / 2 + size
     for i, line in enumerate(art):
-        rows.append(f'<text x="{art_x:.1f}" y="{art_y + i * line_h:.1f}" font-size="{size:.2f}" fill="{GREEN}" '
+        rows.append(f'<text x="{art_x:.1f}" y="{art_y + i * line_h:.1f}" font-size="{size:.2f}" fill="{ART}" '
                     f'xml:space="preserve">{escape(line)}</text>')
 
     info_x = 420
@@ -182,7 +202,7 @@ def build(art):
 
     return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" font-size="13" role="img" aria-label="Basel Nasser: MS Information Systems student at Northeastern University, Vancouver, focused on product management and IT consulting">
 <style>text {{ font-family: {FONT}; }}</style>
-<rect width="{W}" height="{H}" rx="8" fill="{BG}" stroke="#3a3a3a"/>
+<rect width="{W}" height="{H}" rx="8" fill="{BG}" stroke="{BORDER}"/>
 {title_bar()}
 <rect width="0" height="0"><animate id="cycle" attributeName="opacity" begin="0s;cycle.end" dur="{start:.2f}s" values="1"/></rect>
 {''.join(rows)}
@@ -195,9 +215,11 @@ def build(art):
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         sys.exit("usage: python scripts/make_card.py photo.png")
-    svg = build(ascii_from_photo(sys.argv[1]))
     import xml.dom.minidom
-    xml.dom.minidom.parseString(svg)  # self-check: invalid XML would show as a broken image on GitHub
-    out = ROOT / "assets" / "profile.svg"
-    out.write_text(svg, encoding="utf-8")
-    print(f"wrote {out}")
+    for theme in PALETTES:
+        use_palette(theme)
+        svg = build(ascii_from_photo(sys.argv[1], invert=theme == "light"))
+        xml.dom.minidom.parseString(svg)  # self-check: invalid XML would show as a broken image on GitHub
+        out = ROOT / "assets" / f"profile{SUFFIX[theme]}.svg"
+        out.write_text(svg, encoding="utf-8")
+        print(f"wrote {out}")
