@@ -36,7 +36,7 @@ BG, BAR, RED, GREEN, BLUE, WHITE, GREY = "#0c0c0c", "#202020", "#c9735f", "#56d3
 YELLOW = "#d29922"
 FONT = "'Cascadia Mono', Consolas, ui-monospace, Menlo, 'Liberation Mono', monospace"
 CHAR_W = 7.8  # width of one 13px monospace character
-ART_BOX = (30, 50, 360, 360)  # x, y, width, height available for the face
+ART_BOX = (30, 46, 360, 384)  # x, y, width, height available for the face
 
 
 def ascii_from_photo(path, cols=110):
@@ -137,6 +137,8 @@ def route(y):
 def build(art):
     rows = []
     box_x, box_y, box_w, box_h = ART_BOX
+    lead = min(len(line) - len(line.lstrip()) for line in art if line.strip())
+    art = [line[lead:] for line in art]  # drop empty columns so centring uses the face's real width
     cols = max(len(line) for line in art)
     size = min(box_w / (cols * 0.6), box_h / (len(art) * 1.1))  # fit the face in its box
     char_w, line_h = size * 0.6, size * 1.1
