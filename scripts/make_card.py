@@ -1,9 +1,10 @@
 """Build assets/profile.svg: a Windows Terminal-style profile card with ASCII art of my face.
 
-Run:  python scripts/make_card.py photo.png   (needs Pillow)
+Run:  python scripts/make_card.py photo.png   (needs Pillow and numpy)
 
-photo.png is a portrait whose background has been made transparent. It is
-not kept in the repository; only the generated card is.
+photo.png is a portrait whose background has been made transparent, for example
+with `rembg i portrait.webp photo.png`. It is not kept in the repository; only
+the generated card is.
 """
 import sys
 from pathlib import Path
@@ -38,21 +39,32 @@ CHAR_W = 7.8  # width of one 13px monospace character
 ART_BOX = (30, 50, 360, 360)  # x, y, width, height available for the face
 
 
-def ascii_from_photo(path, cols=84):
+def ascii_from_photo(path, cols=110):
     """Bright pixels become dense characters (the card is dark); transparent pixels become spaces."""
-    from PIL import Image, ImageFilter, ImageOps
+    import numpy as np
+    from PIL import Image, ImageFilter
 
     ramp = " .,:;-=+*#%@"
     img = Image.open(path).convert("RGBA")
     img = img.crop(img.getbbox())
-    img = img.crop((0, 0, img.width, int(img.height * 0.78)))  # head and shoulders: the face gets more characters
+    img = img.crop((0, 0, img.width, int(img.height * 0.80)))  # head and shoulders
     rows = round(cols * img.height / img.width * 0.6 / 1.1)  # a character cell is 0.6 wide, 1.1 tall
-    img = img.resize((cols, rows))
-    grey = ImageOps.equalize(img.convert("L"), mask=img.getchannel("A"))  # spread the face's tones so eyes and beard show
-    grey = ImageOps.autocontrast(grey.filter(ImageFilter.UnsharpMask(radius=1, percent=180, threshold=0)), cutoff=1)
-    alpha = img.getchannel("A")
-    return ["".join(ramp[1 + grey.getpixel((x, y)) * (len(ramp) - 2) // 255] if alpha.getpixel((x, y)) > 128 else " "
-                    for x in range(cols)) for y in range(rows)]
+    lum = np.asarray(img.convert("L"), float)
+    alpha = np.asarray(img.getchannel("A"), float) / 255
+    blur = np.asarray(Image.fromarray(lum.astype("uint8")).filter(ImageFilter.GaussianBlur(img.width * 0.02)), float)
+    lum += 0.6 * (lum - blur)  # local contrast: curls, brows and beard keep their detail
+    h, w = lum.shape
+    face = lum[int(h * 0.08):int(h * 0.55)][alpha[int(h * 0.08):int(h * 0.55)] > 0.5]
+    lo, hi = np.percentile(face, [3, 97])  # contrast set from the face only, so the white shirt clips instead of the eyes
+    lum = np.clip((lum - lo) / (hi - lo), 0, 1) ** 1.2
+    yy, xx = np.mgrid[0:h, 0:w]
+    oval = np.sqrt(((xx - w / 2) / (w * 0.52)) ** 2 + ((yy - h * 0.35) / (h * 0.78)) ** 2)
+    alpha *= np.clip((1.05 - oval) / 0.25, 0, 1)  # shoulders dissolve at the bottom corners, the head is untouched
+    grey = np.asarray(Image.fromarray((lum * 255).astype("uint8")).resize((cols, rows), Image.BOX), float) / 255
+    alpha = np.asarray(Image.fromarray((alpha * 255).astype("uint8")).resize((cols, rows), Image.BOX), float) / 255
+    keep = alpha > np.random.default_rng(3).random(alpha.shape) * 0.8 + 0.1  # dithered edge; fixed seed keeps runs identical
+    idx = (1 + grey * (len(ramp) - 2)).astype(int)
+    return ["".join(ramp[idx[y, x]] if keep[y, x] else " " for x in range(cols)).rstrip() for y in range(rows)]
 
 
 def typing(text, x, y, start, per_char=0.09, hold=2.2):
