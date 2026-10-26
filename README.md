@@ -1,5 +1,5 @@
 <p align="center">
-<img src="assets/profile.svg" alt="Basel Nasser: MS Information Systems student at Northeastern University, Vancouver, focused on product management and IT consulting" width="100%" />
+<img src="assets/profile.svg?v=2" alt="Basel Nasser: MS Information Systems student at Northeastern University, Vancouver, focused on product management and IT consulting" width="100%" />
 </p>
 
 <h3 align="center">Basel Nasser</h3>
