@@ -36,8 +36,8 @@ W, H = 900, 480
 PALETTES = {
     "dark": dict(BG="#0c0c0c", BAR="#202020", RED="#c9735f", GREEN="#56d364", BLUE="#58a6ff", WHITE="#e6edf3",
                  GREY="#a0a0a0", YELLOW="#d29922", BORDER="#3a3a3a", BOX="#161b22", ART="#56d364"),
-    "light": dict(BG="#ffffff", BAR="#f3f4f6", RED="#cf222e", GREEN="#1a7f37", BLUE="#0969da", WHITE="#1f2328",
-                  GREY="#6e7781", YELLOW="#9a6700", BORDER="#d0d7de", BOX="#f6f8fa", ART="#1f2328"),
+    "light": dict(BG="#f6f8fa", BAR="#eaeef2", RED="#cf222e", GREEN="#1a7f37", BLUE="#0969da", WHITE="#1f2328",
+                  GREY="#6e7781", YELLOW="#9a6700", BORDER="#d0d7de", BOX="#eef1f4", ART="#1f2328"),
 }
 SUFFIX = {"dark": "", "light": "-light"}  # file name ending per theme
 

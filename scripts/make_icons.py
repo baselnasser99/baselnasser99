@@ -1,4 +1,5 @@
-"""Build assets/tech-stack.svg and tech-stack-light.svg: my tools by folder, one-colour logos that float gently.
+"""Build assets/tech-stack*.svg (my tools by folder, one-colour logos that float gently) and assets/focus*.svg
+(the three things I do, as green tags that pop in one after another).
 
 Run:  python scripts/make_icons.py path/to/simple-icons/icons
 (icons from https://github.com/simple-icons/simple-icons, CC0)
@@ -14,12 +15,15 @@ from xml.sax.saxutils import escape
 from make_card import FONT, ROOT
 
 GROUPS = [
-    ("build", [("python", "python"), ("flask", "flask"), ("sqlalchemy", "sqlalchemy")]),
+    ("build", [("python", "python"), ("flask", "flask"), ("sqlalchemy", "sqlalchemy"), ("javascript", "javascript")]),
     ("data", [("mysql", "mysql"), ("sqlite", "sqlite"), ("googlebigquery", "bigquery"), ("dbt", "dbt")]),
-    ("ship", [("docker", "docker"), ("githubactions", "github actions"), ("pytest", "pytest")]),
+    ("ship", [("docker", "docker"), ("githubactions", "github actions"), ("pytest", "pytest"), ("netlify", "netlify")]),
 ]
 # (logo, tool name, folder name) per theme: GitHub's own greens, inks and blues
 THEMES = {"tech-stack": ("#56d364", "#e6edf3", "#58a6ff"), "tech-stack-light": ("#116329", "#1f2328", "#0969da")}
+FOCUS = ["Product Management", "IT Consulting", "Data Analysis"]
+# (text, tag fill, tag border) per theme: the card's green on GitHub's own code-block greys
+FOCUS_THEMES = {"focus": ("#56d364", "#161b22", "#30363d"), "focus-light": ("#116329", "#f6f8fa", "#d0d7de")}
 W, ROW, ICON = 900, 62, 30
 LABEL_W, ITEM_W = 150, 182
 
@@ -55,6 +59,28 @@ text {{ font-family: {FONT}; }}
 """
 
 
+def focus(ink, fill, border, size=15, pad=14, gap=12, h=34):
+    char = size * 0.6  # monospace advance
+    widths = [len(t) * char + 2 * pad for t in FOCUS]
+    w = sum(widths) + gap * (len(FOCUS) - 1) + 4
+    tags, x = [], 2
+    for i, (text, tw) in enumerate(zip(FOCUS, widths)):
+        tags.append(f'<g class="pop" style="animation-delay:{0.15 + i * 0.18:.2f}s">'
+                    f'<rect x="{x:.1f}" y="2" width="{tw:.1f}" height="{h}" rx="7" fill="{fill}" stroke="{border}"/>'
+                    f'<text x="{x + tw / 2:.1f}" y="{2 + h / 2 + size * 0.35:.1f}" text-anchor="middle" fill="{ink}" font-weight="600">{escape(text)}</text></g>')
+        x += tw + gap
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w:.0f} {h + 4}" width="{w:.0f}" height="{h + 4}" font-size="{size}" role="img" aria-label="{escape(', '.join(FOCUS))}">
+<style>
+text {{ font-family: {FONT}; }}
+.pop {{ transform-box: fill-box; transform-origin: center; animation: pop 0.5s cubic-bezier(.3, 1.4, .5, 1) both; }}
+@keyframes pop {{ from {{ opacity: 0; transform: scale(0.6); }} to {{ opacity: 1; transform: scale(1); }} }}
+@media (prefers-reduced-motion: reduce) {{ .pop {{ animation: none; }} }}
+</style>
+{''.join(tags)}
+</svg>
+"""
+
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         sys.exit("usage: python scripts/make_icons.py path/to/simple-icons/icons")
@@ -64,3 +90,9 @@ if __name__ == "__main__":
         out = ROOT / "assets" / f"{name}.svg"
         out.write_text(svg, encoding="utf-8")
         print(f"wrote {out} ({out.stat().st_size // 1024} KB)")
+    for name, colours in FOCUS_THEMES.items():
+        svg = focus(*colours)
+        xml.dom.minidom.parseString(svg)
+        out = ROOT / "assets" / f"{name}.svg"
+        out.write_text(svg, encoding="utf-8")
+        print(f"wrote {out}")
