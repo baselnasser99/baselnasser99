@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 508 38" width="508" height="38" font-size="15" role="img" aria-label="Product Management, IT Consulting, Data Analysis">
-<style>
-text { font-family: 'Cascadia Mono', Consolas, ui-monospace, Menlo, 'Liberation Mono', monospace; }
-.pop { transform-box: fill-box; transform-origin: center; animation: pop 0.5s cubic-bezier(.3, 1.4, .5, 1) both; }
-@keyframes pop { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) { .pop { animation: none; } }
-</style>
-<g class="pop" style="animation-delay:0.15s"><rect x="2.0" y="2" width="190.0" height="34" rx="7" fill="#161b22" stroke="#30363d"/><text x="97.0" y="24.2" text-anchor="middle" fill="#56d364" font-weight="600">Product Management</text></g><g class="pop" style="animation-delay:0.33s"><rect x="204.0" y="2" width="145.0" height="34" rx="7" fill="#161b22" stroke="#30363d"/><text x="276.5" y="24.2" text-anchor="middle" fill="#56d364" font-weight="600">IT Consulting</text></g><g class="pop" style="animation-delay:0.51s"><rect x="361.0" y="2" width="145.0" height="34" rx="7" fill="#161b22" stroke="#30363d"/><text x="433.5" y="24.2" text-anchor="middle" fill="#56d364" font-weight="600">Data Analysis</text></g>
-</svg>

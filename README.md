@@ -2,10 +2,8 @@
 <picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/profile.svg"><img src="assets/profile-light.svg" alt="Basel Nasser: MS Information Systems student at Northeastern University, Vancouver, focused on product management and IT consulting" width="100%" /></picture>
 </p>
 
-<h3 align="center">Basel Nasser</h3>
-
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/focus.svg"><img src="assets/focus-light.svg" alt="Product Management, IT Consulting, Data Analysis" /></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/header.svg"><img src="assets/header-light.svg" alt="Basel Nasser: Product Management, IT Consulting, Data Analysis" width="560" /></picture>
 </p>
 
 <p align="center">
