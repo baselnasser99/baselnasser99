@@ -14,13 +14,13 @@ ROOT = Path(__file__).resolve().parent.parent
 USER = "basel@github"
 FACTS = [
     ("Role", "MS Information Systems student"),
-    ("Focus", "Product Management · IT Consulting"),
+    ("Focus", "Product Management · IT Consulting · Data Analysis"),
     ("School", "Northeastern University, Vancouver (Jan 2027)"),
     ("Degree", "B.Sc. Computer Science Engineering, Pécs (HU)"),
     ("Thesis", "Data Tagging Application"),
-    ("Stack.Backend", "python, flask, sqlalchemy"),
-    ("Stack.Data", "mysql, sqlite, sql"),
-    ("Stack.Delivery", "docker, github actions, pytest"),
+    ("Stack.Build", "python, flask, sqlalchemy, javascript"),
+    ("Stack.Data", "mysql, sqlite, bigquery, dbt"),
+    ("Stack.Ship", "docker, github actions, pytest, netlify"),
     ("Languages", "english, arabic"),
     ("Contact", "linkedin.com/in/baselnasser"),
     ("Email", "baselnasser99@gmail.com"),
