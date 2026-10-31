@@ -56,15 +56,15 @@ PROJECTS = [
         "name": "second-order",
         "facts": [
             ("Question", "why don't customers buy twice?"),
-            ("Data", "olist marketplace, 9 tables"),
-            ("Built", "staging + 3 marts, tested in ci"),
-            ("Now", "180-day return by first order"),
-            ("Stack", "bigquery, dbt, sql, python"),
+            ("Found", "3 in 100 ever order again"),
+            ("180 days", "1.99% return, late or on time"),
+            ("At risk", "269,735 BRL on canceled orders"),
+            ("Stack", "bigquery, dbt, sql, data studio"),
         ],
-        "status": ("in progress", "YELLOW"),
-        "typed": "dbt build --select dim_customers",
-        "flow": ["9 csv files", "bigquery", "dbt", "insight"],
-        "flow_done": 3,  # steps finished so far; the rest are drawn dashed
+        "status": ("shipped", "GREEN"),
+        "typed": "open second-order --dashboard",
+        # 2,997 of 96,096 people ordered a second time (3.12%): drawn as 3 of 100 squares
+        "again": (3, 100),
     },
 ]
 
@@ -253,25 +253,24 @@ def build(p, theme):
                    f'<text x="{24 + 6 * CHAR_W + 6 * 12 + 4 + 5 * CHAR_W + 16:.1f}" y="222" fill="{GREY}">park</text>'
                    f'<text x="24" y="244" fill="{GREY}">since 2016, pixel ≈ 450 m</text>')
         rows.append("".join(key))
-    if p.get("flow"):  # the pipeline as boxes and arrows
-        x = 24
-        for i, step in enumerate(p["flow"]):
-            w = len(step) * CHAR_W + 20
-            done = i < p.get("flow_done", len(p["flow"]))
-            edge = f'stroke="{GREEN}"' if done else f'stroke="{GREY}" stroke-dasharray="3 3"'
-            rows.append(f'<rect x="{x}" y="{base - 30}" width="{w:.1f}" height="28" rx="4" fill="{BOX}" {edge} stroke-width="0.8"/>'
-                        f'<text x="{x + w / 2:.1f}" y="{base - 11}" text-anchor="middle" fill="{BLUE if i == len(p["flow"]) - 1 else WHITE}">{escape(step)}</text>')
-            x += w
-            if i < len(p["flow"]) - 1:
-                rows.append(f'<text x="{x + 6:.1f}" y="{base - 11}" fill="{GREY}">-&gt;</text>')
-                x += 32
+    if p.get("again"):  # one square per customer out of 100; the few who came back pulse
+        lit, total = p["again"]
+        back = {17, 58, 89}  # spread out, so they read as rare rather than as a block
+        assert len(back) == lit
+        rows.append(f'<text x="24" y="{base - 40}" fill="{GREY}">100 customers, {lit} ordered again</text>')
+        for i in range(total):
+            x, y = 24 + (i % 50) * 7.84, base - 30 + (i // 50) * 9
+            cls, fill = ('class="again" ', GREEN) if i in back else ("", BORDER)
+            rows.append(f'<rect {cls}x="{x:.1f}" y="{y}" width="6" height="6" rx="1" fill="{fill}"/>')
 
     return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" font-size="13" role="img" aria-label="{escape(p['name'])}: {escape(p['facts'][0][1])}">
 <style>
 text {{ font-family: {FONT}; }}
 .px {{ transform-box: fill-box; transform-origin: center; animation: blast 7s ease-out infinite both; }}
 @keyframes blast {{ 0% {{ opacity: 0; transform: scale(0); }} 6% {{ opacity: 1; transform: scale(1.5); }} 12%, 85% {{ opacity: 1; transform: scale(1); }} 97%, 100% {{ opacity: 0; transform: scale(1); }} }}
-@media (prefers-reduced-motion: reduce) {{ .px {{ animation: none; }} }}
+.again {{ animation: pulse 2.4s ease-in-out infinite; }}
+@keyframes pulse {{ 50% {{ opacity: 0.35; }} }}
+@media (prefers-reduced-motion: reduce) {{ .px, .again {{ animation: none; }} }}
 </style>
 <rect width="{W}" height="{H}" rx="8" fill="{BG}" stroke="{BORDER}"/>
 {title_bar(p['name'])}

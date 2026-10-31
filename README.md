@@ -22,7 +22,7 @@ Starting my MS in Information Systems at Northeastern, Vancouver, in 2027.
 
 <p align="center">
 <a href="https://github.com/baselnasser99/Datathon-Project"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/project-vanscene.svg"><img src="assets/project-vanscene-light.svg" alt="VanScene, live: a Vancouver crime map in plain words. 1st place, Build Trilemma Datathon 2026; I rebuilt the interface, data pipeline and accessibility after the win. JavaScript, Leaflet, Python, GitHub Actions" width="49%" /></picture></a>
-<a href="https://github.com/baselnasser99/second-order"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/project-second-order.svg"><img src="assets/project-second-order-light.svg" alt="second-order, in progress: why Olist customers don't buy twice. Staging and three marts built and tested; now measuring 180-day return by first order. BigQuery, dbt, SQL, Python" width="49%" /></picture></a>
+<a href="https://github.com/baselnasser99/second-order"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/project-second-order.svg"><img src="assets/project-second-order-light.svg" alt="second-order, shipped: only 3 in 100 Olist customers ever order again, and 1.99% return within 180 days whether their first order was late or on time; 269,735 BRL was paid on canceled orders. BigQuery, dbt, SQL, Data Studio" width="49%" /></picture></a>
 </p>
 
 ---
