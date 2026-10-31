@@ -26,7 +26,7 @@ FACTS = [
     ("Email", "baselnasser99@gmail.com"),
     ("Email.School", "nasser.b@northeastern.edu"),
 ]
-NOW = ("Now", "building second-order")
+NOW = ("Now", "second-order shipped, MS in 2027")
 ROUTE = [("ps", "Palestine", "home"), ("hu", "Pécs, HU", "B.Sc."), ("ca", "Vancouver, CA", "MS, 2027")]
 TYPED = ["product · consulting · data", "let's build something useful"]
 PROMPT = "PS C:\\Users\\basel>"
