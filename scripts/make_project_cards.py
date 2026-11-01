@@ -30,7 +30,7 @@ THESIS = {
     ],
 }
 TAG_YELLOW, TAG_INK = "#F5CF3A", "#1C2733"  # the app's own highlight yellow and the ink it sits under
-VANSCENE_DATA = "https://raw.githubusercontent.com/baselnasser99/Datathon-Project/HEAD/web/data.json"
+VANSCENE_DATA = "https://raw.githubusercontent.com/baselnasser99/VanScene/HEAD/web/data.json"
 # the city's outline: its 22 local areas and its parks, City of Vancouver Open Data (Open Government Licence - Vancouver)
 _OPEN_DATA = "https://opendata.vancouver.ca/api/explore/v2.1/catalog/datasets/{}/exports/geojson"
 CITY_AREAS, CITY_PARKS = _OPEN_DATA.format("local-area-boundary"), _OPEN_DATA.format("parks-polygon-representation")
