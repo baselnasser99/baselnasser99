@@ -34,8 +34,38 @@ VANSCENE_DATA = "https://raw.githubusercontent.com/baselnasser99/VanScene/HEAD/w
 # the city's outline: its 22 local areas and its parks, City of Vancouver Open Data (Open Government Licence - Vancouver)
 _OPEN_DATA = "https://opendata.vancouver.ca/api/explore/v2.1/catalog/datasets/{}/exports/geojson"
 CITY_AREAS, CITY_PARKS = _OPEN_DATA.format("local-area-boundary"), _OPEN_DATA.format("parks-polygon-representation")
-# VanScene's heat scale, fewer to more: amber to plum on light, amber to rose on dark so the top end stays visible
-HEAT = {"dark": ((242, 184, 75), (214, 76, 128)), "light": ((240, 178, 70), (110, 40, 96))}
+# VanScene's heat scale, fewer to more, the same in both themes (--ramp-1 to --ramp-5 in its web/styles.css)
+RAMP = [(0x3f, 0xd4, 0x6a), (0xa6, 0xe0, 0x3a), (0xff, 0xd2, 0x1f), (0xff, 0x8a, 0x1f), (0xf0, 0x32, 0x1e)]
+
+
+def ramp(t):
+    """A colour from the heat scale, t from 0 (fewer) to 1 (more)."""
+    i = min(int(t * (len(RAMP) - 1)), len(RAMP) - 2)
+    f = t * (len(RAMP) - 1) - i
+    return "#%02x%02x%02x" % tuple(round(a + (b - a) * f) for a, b in zip(RAMP[i], RAMP[i + 1]))
+
+
+
+# only the VanScene card carries this, so the other cards stay as they are
+MARK_CSS = """
+.vl, .vr { transform-box: fill-box; animation: 7s cubic-bezier(.22, 1, .36, 1) infinite both; }
+.vl { transform-origin: 100% 100%; animation-name: vl; }
+.vr { transform-origin: 0 100%; animation-name: vr; animation-delay: .08s; }
+@keyframes vl { 0% { opacity: 0; transform: translateY(14px) rotate(22deg); } 13%, 100% { opacity: 1; transform: none; } }
+@keyframes vr { 0% { opacity: 0; transform: translateY(14px) rotate(-22deg); } 13%, 100% { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .vl, .vr { animation: none; } }
+"""
+
+
+def vanscene_mark(x, y, h=14):
+    """VanScene's logo mark, its two blades (docs/logo in the VanScene repo), h px tall with its top-left at x, y.
+    The blades rise and close in at the start of each map loop, as the logo does when the site opens."""
+    k = h / 180  # the blades span x 24-232, y 36-216 of the logo's 256 box
+    return (f'<style>{MARK_CSS}</style>'
+            f'<g transform="translate({x - 24 * k:.2f} {y - 36 * k:.2f}) scale({k:.4f})" fill="{WHITE}">'
+            '<path class="vl" d="M24 36L104 57.4L122 216L104 216Z"/><path class="vr" d="M232 36L152 57.4L134 216L152 216Z"/></g>')
+
+
 PROJECTS = [
     {
         "slug": "vanscene",
@@ -170,7 +200,7 @@ def _rings(url, keep=lambda props: True):
             yield from (poly[0] for poly in ([geom["coordinates"]] if geom["type"] == "Polygon" else geom["coordinates"]))
 
 
-def heat_map(theme, x0, y0, cols=32, width=168):
+def heat_map(x0, y0, cols=32, width=168):
     """Vancouver as pixels, coloured by reported incidents, that pop in from the busiest spot outward and fade,
     on a loop. Counts come from VanScene's web/data.json (coordinates in 1e-4 degrees). The city's local areas and
     Stanley Park give the outline; inside it, a cell with no reports and no park is water (False Creek, the coast)."""
@@ -203,12 +233,11 @@ def heat_map(theme, x0, y0, cols=32, width=168):
     busy = land & (grid >= 30)  # streets with real reports; parks and quiet land are drawn dim
     level = np.searchsorted(np.sort(grid[busy]), grid) / busy.sum()  # rank, so every neighbourhood gets a shade
     peak = np.unravel_index(np.where(busy, grid, 0).argmax(), grid.shape)
-    lo, hi = HEAT[theme]
     out = []
     for (r, c), t in np.ndenumerate(level):
         if not land[r, c]:
             continue
-        rgb = "#%02x%02x%02x" % tuple(round(a + (b - a) * t) for a, b in zip(lo, hi)) if busy[r, c] else BORDER
+        rgb = ramp(t ** 3) if busy[r, c] else BORDER  # cubed, so most streets read green and only the densest red, as in the app
         delay = math.hypot(r - peak[0], c - peak[1]) * 0.05
         out.append(f'<rect class="px" style="animation-delay:{delay:.2f}s" x="{x0 + c * pitch:.1f}" y="{y0 + r * pitch:.1f}" '
                    f'width="{pitch - 1:.1f}" height="{pitch - 1:.1f}" rx="1" fill="{rgb}"/>')
@@ -234,20 +263,20 @@ def fact(key, value, x, y):
             f'<tspan fill="{GREEN}">{escape(value)}</tspan></text>')
 
 
-def build(p, theme):
+def build(p):
     label, colour = p["status"][0], globals()[p["status"][1]]  # by name, so each theme gets its own shade
-    rows = [f'<text x="24" y="62" font-size="15" font-weight="700" fill="{WHITE}">{escape(p["name"])}</text>'
+    name_x = 24 + 22 if p.get("heat") else 24  # VanScene's name sits beside its logo mark
+    rows = [(vanscene_mark(24, 49) if p.get("heat") else "")
+            + f'<text x="{name_x}" y="62" font-size="15" font-weight="700" fill="{WHITE}">{escape(p["name"])}</text>'
             f'<circle cx="{W - 24 - len(label) * CHAR_W - 12}" cy="57" r="4" fill="{colour}"/>'
             f'<text x="{W - 24}" y="62" text-anchor="end" fill="{colour}">{escape(label)}</text>']
     rows += [fact(key, value, 24, 92 + i * 21) for i, (key, value) in enumerate(p["facts"])]
     base = 248
     if p.get("heat"):
-        rows.append(heat_map(theme, W - 24 - 168, 80))
-        lo, hi = HEAT[theme]
+        rows.append(heat_map(W - 24 - 168, 80))
         key = [f'<text x="24" y="222" fill="{GREY}">fewer</text>']
         for i in range(6):
-            rgb = "#%02x%02x%02x" % tuple(round(a + (b - a) * i / 5) for a, b in zip(lo, hi))
-            key.append(f'<rect x="{24 + 6 * CHAR_W + i * 12:.1f}" y="212" width="10" height="10" rx="1.5" fill="{rgb}"/>')
+            key.append(f'<rect x="{24 + 6 * CHAR_W + i * 12:.1f}" y="212" width="10" height="10" rx="1.5" fill="{ramp(i / 5)}"/>')
         key.append(f'<text x="{24 + 6 * CHAR_W + 6 * 12 + 4:.1f}" y="222" fill="{GREY}">more</text>'
                    f'<rect x="{24 + 6 * CHAR_W + 6 * 12 + 4 + 5 * CHAR_W:.1f}" y="212" width="10" height="10" rx="1.5" fill="{BORDER}"/>'
                    f'<text x="{24 + 6 * CHAR_W + 6 * 12 + 4 + 5 * CHAR_W + 16:.1f}" y="222" fill="{GREY}">park</text>'
@@ -285,7 +314,7 @@ if __name__ == "__main__":
         make_card.use_palette(theme)  # typing() reads make_card's colours
         make_card.use_palette(theme, globals())
         for p in PROJECTS:
-            svg = build(p, theme)
+            svg = build(p)
             xml.dom.minidom.parseString(svg)  # self-check: invalid XML would show as a broken image on GitHub
             out = ROOT / "assets" / f"project-{p['slug']}{SUFFIX[theme]}.svg"
             out.write_text(svg, encoding="utf-8")
