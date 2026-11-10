@@ -1,10 +1,11 @@
-"""Build assets/profile.svg: a Windows Terminal-style profile card with ASCII art of my face.
+"""Build assets/profile.svg: a Windows Terminal-style profile card with my face drawn as ASCII art.
 
-Run:  python scripts/make_card.py photo.png   (needs Pillow and numpy)
+Run:  python scripts/make_card.py photo.png   (needs Pillow, numpy and opencv-python)
 
-photo.png is a portrait whose background has been made transparent, for example
-with `rembg i portrait.webp photo.png`. It is not kept in the repository; only
-the generated card is.
+photo.png is a portrait whose background has been made transparent, for example with
+rembg's u2net_human_seg model and alpha matting (foreground 250, background 60, erode 25),
+which keeps the curls without the night sky between them. It is not kept in the repository;
+only the generated card is.
 """
 import sys
 from pathlib import Path
@@ -54,37 +55,90 @@ CHAR_W = 7.8  # width of one 13px monospace character
 ART_BOX = (30, 46, 360, 384)  # x, y, width, height available for the face
 
 
-def ascii_from_photo(path, cols=110, invert=False):
-    """Bright pixels become dense characters (the card is dark); transparent pixels become spaces.
+def drawn_face(path, theme, size=7.0, line_k=0.35, every=3):
+    """The face as a drawing with real characters typed over it: the drawing carries the likeness, the characters
+    keep it a terminal. Every `every` seconds it glitches: slices tear sideways and flash the same characters as
+    digits, so the face is seen to be made of text.
 
-    invert=True is for a light card: dark pixels (hair, beard, jacket) become dense instead, like pencil.
+    dark: light where the photo is light, like a lit screen. light: dark where the photo is dark, like a print.
+    Returns SVG to place inside ART_BOX.
     """
+    import base64, io
+    import cv2
     import numpy as np
-    from PIL import Image, ImageFilter
+    from PIL import Image
 
-    ramp = " .,:;-=+*#%@"
+    ss = 2  # the drawing is stored at 2x so the lines stay sharp
+    box_x, box_y, box_w, box_h = ART_BOX
     img = Image.open(path).convert("RGBA")
     img = img.crop(img.getbbox())
     img = img.crop((0, 0, img.width, int(img.height * 0.80)))  # head and shoulders
-    rows = round(cols * img.height / img.width * 0.6 / 1.1)  # a character cell is 0.6 wide, 1.1 tall
-    lum = np.asarray(img.convert("L"), float)
-    if invert:
-        lum = 255 - lum
+    k = min(box_w / img.width, box_h / img.height) * ss
+    img = img.resize((round(img.width * k), round(img.height * k)), Image.LANCZOS)
+    gray = np.asarray(img.convert("L"), float) / 255
     alpha = np.asarray(img.getchannel("A"), float) / 255
-    blur = np.asarray(Image.fromarray(lum.astype("uint8")).filter(ImageFilter.GaussianBlur(img.width * 0.02)), float)
-    lum += 0.6 * (lum - blur)  # local contrast: curls, brows and beard keep their detail
-    h, w = lum.shape
-    face = lum[int(h * 0.08):int(h * 0.55)][alpha[int(h * 0.08):int(h * 0.55)] > 0.5]
+    h, w = gray.shape
+
+    # pen lines (XDoG): ink wherever the photo darkens against its surroundings: curls, brows, eyes, lips, beard
+    d = cv2.GaussianBlur(gray, (0, 0), 1.3) - 0.98 * cv2.GaussianBlur(gray, (0, 0), 1.3 * 1.6)
+    lines = np.clip(np.where(d < -0.004, 1 - np.exp(d * 70), 0), 0, 1)
+    face = gray[int(h * 0.08):int(h * 0.55)][alpha[int(h * 0.08):int(h * 0.55)] > 0.5]
     lo, hi = np.percentile(face, [3, 97])  # contrast set from the face only, so the white shirt clips instead of the eyes
-    lum = np.clip((lum - lo) / (hi - lo), 0, 1) ** 1.2
+    tone = np.clip((gray - lo) / (hi - lo), 0, 1)
+    edge = np.clip(alpha - cv2.erode(alpha, np.ones((3, 3))), 0, 1)  # the silhouette, so ears and jaw keep an edge on paper
+    edge = np.clip(cv2.GaussianBlur(edge, (0, 0), 0.8) * 2, 0, 1)
     yy, xx = np.mgrid[0:h, 0:w]
     oval = np.sqrt(((xx - w / 2) / (w * 0.52)) ** 2 + ((yy - h * 0.35) / (h * 0.78)) ** 2)
     alpha *= np.clip((1.05 - oval) / 0.25, 0, 1)  # shoulders dissolve at the bottom corners, the head is untouched
-    grey = np.asarray(Image.fromarray((lum * 255).astype("uint8")).resize((cols, rows), Image.BOX), float) / 255
-    alpha = np.asarray(Image.fromarray((alpha * 255).astype("uint8")).resize((cols, rows), Image.BOX), float) / 255
-    keep = alpha > np.random.default_rng(3).random(alpha.shape) * 0.8 + 0.1  # dithered edge; fixed seed keeps runs identical
-    idx = (1 + grey * (len(ramp) - 2)).astype(int)
-    return ["".join(ramp[idx[y, x]] if keep[y, x] else " " for x in range(cols)).rstrip() for y in range(rows)]
+    lit = np.clip(tone + 0.8 * (tone - cv2.GaussianBlur(tone, (0, 0), 6 * ss)), 0, 1) ** 1.1  # local contrast keeps the curls
+    if theme == "dark":  # light where the photo is light
+        ink = np.clip(lit * 0.9 - lines * line_k, 0, 1) * alpha
+    else:  # dark where the photo is dark, like a print
+        ink = np.clip(np.maximum((1 - lit) ** 1.2 * 0.85 + lines * line_k, edge * 0.55), 0, 1) * alpha
+
+    # on paper a strong drawing reads as a sketch, so there the characters carry most of the shading
+    img_op, glyph_op, gmin = (0.8, 0.6, 0.15) if theme == "dark" else (0.4, 0.95, 0.07)
+    char_w, line_h = size * 0.6, size * 1.1
+    r, g, b = (int(ART[i:i + 2], 16) for i in (1, 3, 5))
+    a = (ink * 255 * img_op).astype("uint8")
+    buf = io.BytesIO()
+    Image.fromarray(np.dstack([np.full_like(a, r), np.full_like(a, g), np.full_like(a, b), a]), "RGBA").save(buf, "PNG", optimize=True)
+    x0, y0 = box_x + (box_w - w / ss) / 2, box_y + (box_h - h / ss) / 2
+    image = (f'<image x="{x0:.1f}" y="{y0:.1f}" width="{w / ss:.1f}" height="{h / ss:.1f}" '
+             f'href="data:image/png;base64,{base64.b64encode(buf.getvalue()).decode()}"/>')
+
+    # real characters over the drawing, chosen from the same ink: symbols normally, digits in the glitch
+    small = cv2.resize(ink, (int(w / ss / char_w), int(h / ss / line_h)), interpolation=cv2.INTER_AREA)
+
+    def text(ramp):
+        out = []
+        for row, vals in enumerate(small):
+            line = "".join(ramp[min(int(v * (len(ramp) - 1) * 1.15 + 0.35), len(ramp) - 1)] if v > gmin else " " for v in vals).rstrip()
+            if line:
+                out.append(f'<text x="{x0:.1f}" y="{y0 + (row + 0.82) * line_h:.1f}" xml:space="preserve">{escape(line)}</text>')
+        return "".join(out)
+
+    # the glitch: once per loop, for half a second, a few thin slices flicker into the same characters as digits,
+    # twitching a little sideways, then snap back; the rest of the face is untouched. Slices come from a fixed seed,
+    # so every run of this script draws the same glitch.
+    rng = np.random.default_rng(7)
+    fw, fh = w / ss, h / ss
+    burst = 0.5 / every * 100  # share of the loop the glitch lasts
+    css, slices = [], []
+    for i in range(8):
+        sh = float(rng.uniform(3, 16))
+        sy = y0 + float(rng.uniform(0.05, 0.9)) * fh
+        frames = sorted(rng.uniform(0, burst, 3))
+        steps = " ".join(f"{t:.2f}% {{ opacity: 1; transform: translateX({float(rng.choice([-1, 1]) * rng.uniform(2, 6)):.1f}px); }}" for t in frames)
+        css.append(f"@keyframes g{i} {{ 0% {{ opacity: 0; }} {steps} {frames[-1] + burst / 4:.2f}%, 100% {{ opacity: 0; transform: none; }} }}"
+                   f".g{i} {{ animation: g{i} {every}s steps(1, end) infinite; }}")
+        slices.append(f'<clipPath id="s{i}"><rect x="{x0 - 20:.1f}" y="{sy:.1f}" width="{fw + 40:.1f}" height="{sh:.1f}"/></clipPath>'
+                      f'<g clip-path="url(#s{i})"><g class="gl g{i}"><rect x="{x0 - 20:.1f}" y="{sy:.1f}" width="{fw + 40:.1f}" height="{sh:.1f}" fill="{BG}"/><use href="#digits"/></g></g>')
+    return (f'<style>.gl {{ opacity: 0; }} {"".join(css)}'
+            '@media (prefers-reduced-motion: reduce) { .gl { animation: none; } }</style>'
+            f'<defs><g id="face">{image}<g font-size="{size}" fill="{ART}" fill-opacity="{glyph_op}">{text(" .,:;-=+*#%@")}</g></g>'
+            f'<g id="digits" font-size="{size}" fill="{ART}">{text(" .:174235968")}</g></defs>'
+            f'<use href="#face"/>{"".join(slices)}')
 
 
 def typing(text, x, y, start, per_char=0.09, hold=2.2):
@@ -154,19 +208,8 @@ def route(y):
     return "".join(out)
 
 
-def build(art):
-    rows = []
-    box_x, box_y, box_w, box_h = ART_BOX
-    lead = min(len(line) - len(line.lstrip()) for line in art if line.strip())
-    art = [line[lead:] for line in art]  # drop empty columns so centring uses the face's real width
-    cols = max(len(line) for line in art)
-    size = min(box_w / (cols * 0.6), box_h / (len(art) * 1.1))  # fit the face in its box
-    char_w, line_h = size * 0.6, size * 1.1
-    art_x = box_x + (box_w - cols * char_w) / 2
-    art_y = box_y + (box_h - len(art) * line_h) / 2 + size
-    for i, line in enumerate(art):
-        rows.append(f'<text x="{art_x:.1f}" y="{art_y + i * line_h:.1f}" font-size="{size:.2f}" fill="{ART}" '
-                    f'xml:space="preserve">{escape(line)}</text>')
+def build(face):
+    rows = [face]
 
     info_x = 420
     rows.append(f'<text x="{info_x}" y="74" font-size="16" font-weight="700" fill="{WHITE}">{USER}</text>')
@@ -218,7 +261,7 @@ if __name__ == "__main__":
     import xml.dom.minidom
     for theme in PALETTES:
         use_palette(theme)
-        svg = build(ascii_from_photo(sys.argv[1], invert=theme == "light"))
+        svg = build(drawn_face(sys.argv[1], theme))
         xml.dom.minidom.parseString(svg)  # self-check: invalid XML would show as a broken image on GitHub
         out = ROOT / "assets" / f"profile{SUFFIX[theme]}.svg"
         out.write_text(svg, encoding="utf-8")
