@@ -57,7 +57,7 @@ CHAR_W = 7.8  # width of one 13px monospace character
 ART_BOX = (30, 46, 360, H - 96)  # x, y, width, height available for the face
 
 
-def drawn_face(path, theme, size=7.0, line_k=0.35, every=3):
+def drawn_face(path, theme, size=7.0, line_k=0.35, every=3, zoom=1.15, blend=(0.45, 0.75), dense=" .,:;-=+*"):
     """The face as a drawing with real characters typed over it: the drawing carries the likeness, the characters
     keep it a terminal. Every `every` seconds it glitches: slices tear sideways and flash the same characters as
     digits, so the face is seen to be made of text.
@@ -75,8 +75,10 @@ def drawn_face(path, theme, size=7.0, line_k=0.35, every=3):
     img = Image.open(path).convert("RGBA")
     img = img.crop(img.getbbox())
     img = img.crop((0, 0, img.width, int(img.height * 0.80)))  # head and shoulders
-    k = min(box_w / img.width, box_h / img.height) * ss
+    k = min(box_w / img.width, box_h / img.height) * ss * zoom
     img = img.resize((round(img.width * k), round(img.height * k)), Image.LANCZOS)
+    cut = max(0, (img.width - box_w * ss) // 2)  # zoomed past the box: trim the sides, which fade out anyway
+    img = img.crop((cut, 0, img.width - cut, min(img.height, box_h * ss)))
     gray = np.asarray(img.convert("L"), float) / 255
     alpha = np.asarray(img.getchannel("A"), float) / 255
     h, w = gray.shape
@@ -90,13 +92,21 @@ def drawn_face(path, theme, size=7.0, line_k=0.35, every=3):
     edge = np.clip(alpha - cv2.erode(alpha, np.ones((3, 3))), 0, 1)  # the silhouette, so ears and jaw keep an edge on paper
     edge = np.clip(cv2.GaussianBlur(edge, (0, 0), 0.8) * 2, 0, 1)
     yy, xx = np.mgrid[0:h, 0:w]
+    hair_top = int(np.argmax((alpha > 0.5).any(axis=1)))  # first row with hair
     oval = np.sqrt(((xx - w / 2) / (w * 0.52)) ** 2 + ((yy - h * 0.35) / (h * 0.78)) ** 2)
     alpha *= np.clip((1.05 - oval) / 0.25, 0, 1)  # shoulders dissolve at the bottom corners, the head is untouched
+    alpha *= np.clip((h - yy) / (h * 0.22), 0, 1) ** 1.5  # and the chest fades out, so the crop has no hard edge
+    alpha *= np.clip((yy - hair_top) / (h * 0.07), 0, 1)  # and the stray curls on the crown soften away
     lit = np.clip(tone + 0.8 * (tone - cv2.GaussianBlur(tone, (0, 0), 6 * ss)), 0, 1) ** 1.1  # local contrast keeps the curls
     if theme == "dark":  # light where the photo is light
         ink = np.clip(lit * 0.9 - lines * line_k, 0, 1) * alpha
     else:  # dark where the photo is dark, like a print
-        ink = np.clip(np.maximum((1 - lit) ** 1.2 * 0.85 + lines * line_k, edge * 0.55), 0, 1) * alpha
+        dark = 1 - lit
+        face = dark ** 1.2  # midtones: the face's own shading
+        hair = np.clip((dark - 0.35) / 0.65, 0, 1) ** 1.6  # the darkest tones, spread out so each curl shows instead of a solid clump
+        mix = np.clip((dark - blend[0]) / (blend[1] - blend[0]), 0, 1)
+        shade = face * (1 - mix) + hair * mix
+        ink = np.clip(np.maximum(shade * 0.85 + lines * line_k, edge * 0.55), 0, 1) * alpha
 
     # on paper a strong drawing reads as a sketch, so there the characters carry most of the shading
     img_op, glyph_op, gmin = (0.8, 0.6, 0.15) if theme == "dark" else (0.4, 0.95, 0.07)
@@ -136,11 +146,37 @@ def drawn_face(path, theme, size=7.0, line_k=0.35, every=3):
                    f".g{i} {{ animation: g{i} {every}s steps(1, end) infinite; }}")
         slices.append(f'<clipPath id="s{i}"><rect x="{x0 - 20:.1f}" y="{sy:.1f}" width="{fw + 40:.1f}" height="{sh:.1f}"/></clipPath>'
                       f'<g clip-path="url(#s{i})"><g class="gl g{i}"><rect x="{x0 - 20:.1f}" y="{sy:.1f}" width="{fw + 40:.1f}" height="{sh:.1f}" fill="{BG}"/><use href="#digits"/></g></g>')
+    # matrix rain in the empty space: columns of digits falling at their own speeds, masked by the silhouette (grown a
+    # little, so they never touch the face) and faded at the top and bottom of the art box
+    room = cv2.dilate((alpha > 0.15).astype("uint8"), np.ones((9 * ss, 9 * ss), "uint8"))
+    room = cv2.resize(cv2.GaussianBlur(room.astype(float), (0, 0), 3 * ss), (round(fw), round(fh)), interpolation=cv2.INTER_AREA)
+    free = np.ones((box_h, box_w))
+    fx, fy = round(x0 - box_x), round(y0 - box_y)
+    free[fy:fy + room.shape[0], fx:fx + room.shape[1]] -= room[:box_h - fy, :box_w - fx]
+    free *= np.clip(np.minimum(np.arange(box_h), box_h - 1 - np.arange(box_h)) / 40, 0, 1)[:, None]
+    buf = io.BytesIO()
+    Image.fromarray((np.clip(free, 0, 1) * 255).astype("uint8"), "L").save(buf, "PNG", optimize=True)
+    rain_size, rain_rows = 10, 34
+    drops, rain_css = [], []
+    for c in range(int(box_w / (rain_size * 0.6 * 1.6))):
+        x = box_x + 4 + c * rain_size * 0.6 * 1.6
+        n = int(rng.integers(8, 20))  # trail length
+        chars = "".join(rng.choice(list("0123456789"), n))
+        dur = float(rng.uniform(5, 11))
+        rows = "".join(f'<tspan x="{x:.1f}" dy="{rain_size * 1.2}" fill-opacity="{(0.9 if i == n - 1 else 0.15 + 0.35 * i / n):.2f}">{ch}</tspan>'
+                       for i, ch in enumerate(chars))
+        drops.append(f'<text class="drop" style="animation-duration:{dur:.1f}s;animation-delay:-{float(rng.uniform(0, dur)):.1f}s" '
+                     f'y="{box_y - n * rain_size * 1.2:.1f}">{rows}</text>')
+    travel = box_h + rain_rows * rain_size * 1.2
+    rain = (f'<mask id="room" maskUnits="userSpaceOnUse"><image x="{box_x}" y="{box_y}" width="{box_w}" height="{box_h}" '
+            f'href="data:image/png;base64,{base64.b64encode(buf.getvalue()).decode()}"/></mask>'
+            f'<g mask="url(#room)" font-size="{rain_size}" fill="{ART}" opacity="{0.35 if theme == "dark" else 0.22}">{"".join(drops)}</g>')
     return (f'<style>.gl {{ opacity: 0; }} {"".join(css)}'
-            '@media (prefers-reduced-motion: reduce) { .gl { animation: none; } }</style>'
-            f'<defs><g id="face">{image}<g font-size="{size}" fill="{ART}" fill-opacity="{glyph_op}">{text(" .,:;-=+*#%@")}</g></g>'
+            f'.drop {{ animation: fall linear infinite; }} @keyframes fall {{ to {{ transform: translateY({travel:.0f}px); }} }}'
+            '@media (prefers-reduced-motion: reduce) { .gl, .drop { animation: none; } }</style>'
+            f'<defs><g id="face">{image}<g font-size="{size}" fill="{ART}" fill-opacity="{glyph_op}">{text(dense)}</g></g>'
             f'<g id="digits" font-size="{size}" fill="{ART}">{text(" .:174235968")}</g></defs>'
-            f'<use href="#face"/>{"".join(slices)}')
+            f'{rain}<use href="#face"/>{"".join(slices)}')
 
 
 def typing(text, x, y, start, per_char=0.09, hold=2.2):
