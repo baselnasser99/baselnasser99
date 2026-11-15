@@ -31,7 +31,7 @@ SECTIONS = [
                  ("Email.School", "nasser.b@northeastern.edu")]),
 ]
 ROUTE = [("ps", "Palestine", "home"), ("hu", "Pécs, HU", "B.Sc."), ("ca", "Vancouver, CA", "MS, 2027")]
-TYPED = ["product · consulting · data", "let's build something useful"]
+TYPED = ["whoami: pm brain, engineer hands", "ship it, measure it, fix it"]
 PROMPT = "PS C:\\Users\\basel>"
 
 W, H = 900, 560

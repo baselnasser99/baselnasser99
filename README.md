@@ -7,8 +7,8 @@
 </p>
 
 <p align="center">
-I turn messy team and business problems into software people use.<br>
-Starting my MS in Information Systems at Northeastern, Vancouver, in 2027.
+Product thinking, engineering hands. I turn messy problems into software people use.<br>
+MS Information Systems, Northeastern Vancouver, 2027.
 </p>
 
 ---
