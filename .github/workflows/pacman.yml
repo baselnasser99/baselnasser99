@@ -15,11 +15,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - uses: actions/checkout@v4   # for scripts/recolor_pacman.py
+
       - name: Draw the contribution graph
         uses: abozanona/pacman-contribution-graph@main
         with:
           github_user_name: ${{ github.repository_owner }}
           games: pacman
+
+      - name: Shade each day by its rank, so one huge day doesn't wash out the rest
+        run: python scripts/recolor_pacman.py dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish it to the pacman-output branch
         uses: crazy-max/ghaction-github-pages@v3.1.0

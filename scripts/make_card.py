@@ -13,26 +13,28 @@ from xml.sax.saxutils import escape
 
 ROOT = Path(__file__).resolve().parent.parent
 USER = "basel@github"
-FACTS = [
-    ("Role", "MS Information Systems student"),
-    ("Focus", "Product Management · IT Consulting · Data Analysis"),
-    ("School", "Northeastern University, Vancouver (Jan 2027)"),
-    ("Degree", "B.Sc. Computer Science Engineering, Pécs (HU)"),
-    ("Thesis", "Data Tagging Application"),
-    ("Stack.Build", "python, flask, sqlalchemy, javascript"),
-    ("Stack.Data", "mysql, sqlite, bigquery, dbt"),
-    ("Stack.Ship", "docker, github actions, pytest, netlify"),
-    ("Languages", "english, arabic"),
-    ("Contact", "linkedin.com/in/baselnasser"),
-    ("Email", "baselnasser99@gmail.com"),
-    ("Email.School", "nasser.b@northeastern.edu"),
+# what sits beside the face, in groups; the row marked live gets the pulsing dot
+SECTIONS = [
+    ("about", [("Role", "MS Information Systems student"),
+               ("Focus", "Product Management · IT Consulting · Data Analysis"),
+               ("Languages", "english, arabic"),
+               ("Now", "building vektor-9, MS in 2027", "live")]),
+    ("study", [("School", "Northeastern University, Vancouver (Jan 2027)"),
+               ("Degree", "B.Sc. Computer Science Engineering, Pécs (HU)"),
+               ("Thesis", "Data Tagging Application")]),
+    ("stack", [("Build", "python, javascript, flask"),
+               ("Data", "bigquery, dbt, mysql, looker studio"),
+               ("AWS", "lambda, s3, cloudwatch, iam"),
+               ("Ship", "docker, github actions, aws cdk, pytest")]),
+    ("contact", [("LinkedIn", "linkedin.com/in/baselnasser"),
+                 ("Email", "baselnasser99@gmail.com"),
+                 ("Email.School", "nasser.b@northeastern.edu")]),
 ]
-NOW = ("Now", "second-order shipped, MS in 2027")
 ROUTE = [("ps", "Palestine", "home"), ("hu", "Pécs, HU", "B.Sc."), ("ca", "Vancouver, CA", "MS, 2027")]
 TYPED = ["product · consulting · data", "let's build something useful"]
 PROMPT = "PS C:\\Users\\basel>"
 
-W, H = 900, 480
+W, H = 900, 560
 # One palette per GitHub theme; WHITE is the main ink and ART the face, whatever the theme.
 PALETTES = {
     "dark": dict(BG="#0c0c0c", BAR="#202020", RED="#c9735f", GREEN="#56d364", BLUE="#58a6ff", WHITE="#e6edf3",
@@ -52,7 +54,7 @@ BG = BAR = RED = GREEN = BLUE = WHITE = GREY = YELLOW = BORDER = BOX = ART = Non
 use_palette("dark")
 FONT = "'Cascadia Mono', Consolas, ui-monospace, Menlo, 'Liberation Mono', monospace"
 CHAR_W = 7.8  # width of one 13px monospace character
-ART_BOX = (30, 46, 360, 384)  # x, y, width, height available for the face
+ART_BOX = (30, 46, 360, H - 96)  # x, y, width, height available for the face
 
 
 def drawn_face(path, theme, size=7.0, line_k=0.35, every=3):
@@ -214,17 +216,20 @@ def build(face):
     info_x = 420
     rows.append(f'<text x="{info_x}" y="74" font-size="16" font-weight="700" fill="{WHITE}">{USER}</text>')
     rows.append(f'<line x1="{info_x}" y1="84" x2="{W - 30}" y2="84" stroke="{GREY}" stroke-width="1"/>')
-    for i, (key, value) in enumerate(FACTS):
-        rows.append(f'<text x="{info_x}" y="{106 + i * 20}" font-size="13">'
-                    f'<tspan fill="{WHITE}" font-weight="700">{escape(key)}:</tspan> '
-                    f'<tspan fill="{GREEN}">{escape(value)}</tspan></text>')
-    status_y = 106 + len(FACTS) * 20
-    key, value = NOW
-    rows.append(f'<text x="{info_x}" y="{status_y}" font-size="13"><tspan fill="{WHITE}" font-weight="700">{escape(key)}:</tspan> '
-                f'<tspan fill="{GREEN}">{escape(value)}</tspan></text>')
-    dot_x = info_x + (len(key) + len(value) + 3) * CHAR_W
-    rows.append(f'<circle cx="{dot_x:.1f}" cy="{status_y - 4.5}" r="4" fill="{YELLOW}">'
-                f'<animate attributeName="opacity" values="1;0.25;1" dur="1.6s" repeatCount="indefinite"/></circle>')
+    # each group: a PowerShell comment naming it, then its rows as Key: value
+    y = 104
+    for label, items in SECTIONS:
+        rows.append(f'<text x="{info_x}" y="{y}" fill="{GREY}"># {label}</text>')
+        for item in items:
+            y += 18
+            key, value = item[:2]
+            rows.append(f'<text x="{info_x}" y="{y}"><tspan fill="{WHITE}" font-weight="700">{escape(key)}:</tspan> '
+                        f'<tspan fill="{GREEN}">{escape(value)}</tspan></text>')
+            if item[2:] == ("live",):
+                rows.append(f'<circle cx="{info_x + (len(key) + len(value) + 3) * CHAR_W:.1f}" cy="{y - 4.5}" r="4" fill="{YELLOW}">'
+                            f'<animate attributeName="opacity" values="1;0.25;1" dur="1.6s" repeatCount="indefinite"/></circle>')
+        y += 26
+    status_y = y - 26
     rows.append(route(status_y + 46))
 
     prompt_y = H - 28

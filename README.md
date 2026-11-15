@@ -42,7 +42,7 @@ Starting my MS in Information Systems at Northeastern, Vancouver, in 2027.
 <p align="center">
 <picture>
 <source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/tech-stack.svg">
-<img src="assets/tech-stack-light.svg" alt="Tech stack. Build: Python, Flask, SQLAlchemy, JavaScript. Data: MySQL, SQLite, BigQuery, dbt. Ship: Docker, GitHub Actions, pytest, Netlify" width="100%" />
+<img src="assets/tech-stack-light.svg" alt="Tech stack. Build: Python, JavaScript, Flask. Data: BigQuery, dbt, MySQL, Looker Studio. AWS: Lambda, S3, CloudWatch, IAM. Ship: Docker, GitHub Actions, AWS CDK, pytest" width="100%" />
 </picture>
 </p>
 

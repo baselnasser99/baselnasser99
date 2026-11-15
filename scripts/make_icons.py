@@ -2,7 +2,8 @@
 (my name typed out in the terminal's type, with the three things I do as small tags under it).
 
 Run:  python scripts/make_icons.py path/to/simple-icons/icons
-(icons from https://github.com/simple-icons/simple-icons, CC0)
+(icons from https://github.com/simple-icons/simple-icons, CC0; use version 10.4.0, as later versions dropped the
+AWS and dbt logos)
 
 The background is transparent, so there is one file per GitHub theme; the README picks with <picture>.
 """
@@ -15,9 +16,10 @@ from xml.sax.saxutils import escape
 from make_card import FONT, ROOT
 
 GROUPS = [
-    ("build", [("python", "python"), ("flask", "flask"), ("sqlalchemy", "sqlalchemy"), ("javascript", "javascript")]),
-    ("data", [("mysql", "mysql"), ("sqlite", "sqlite"), ("googlebigquery", "bigquery"), ("dbt", "dbt")]),
-    ("ship", [("docker", "docker"), ("githubactions", "github actions"), ("pytest", "pytest"), ("netlify", "netlify")]),
+    ("build", [("python", "python"), ("javascript", "javascript"), ("flask", "flask")]),
+    ("data", [("googlebigquery", "bigquery"), ("dbt", "dbt"), ("mysql", "mysql"), ("looker", "looker studio")]),
+    ("aws", [("awslambda", "lambda"), ("amazons3", "s3"), ("amazoncloudwatch", "cloudwatch"), ("amazoniam", "iam")]),
+    ("ship", [("docker", "docker"), ("githubactions", "github actions"), ("amazonaws", "aws cdk"), ("pytest", "pytest")]),
 ]
 # (logo, tool name, folder name) per theme: GitHub's own greens, inks and blues
 THEMES = {"tech-stack": ("#56d364", "#e6edf3", "#58a6ff"), "tech-stack-light": ("#116329", "#1f2328", "#0969da")}
