@@ -22,7 +22,7 @@ MS Information Systems, Northeastern Vancouver, 2027.
 
 <p align="center">
 <a href="https://vanscene.vercel.app"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/project-vanscene.svg"><img src="assets/project-vanscene-light.svg" alt="VanScene, live: a Vancouver crime map in plain words, drawn as a heat map from green where reports are few to red where they are densest. 1st place, Build Trilemma Datathon 2026; I rebuilt the interface, data pipeline and accessibility after the win. JavaScript, Leaflet, Python, GitHub Actions" width="49%" /></picture></a>
-<a href="https://github.com/baselnasser99/second-order"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/project-second-order.svg"><img src="assets/project-second-order-light.svg" alt="second-order, shipped: only 3 in 100 Olist customers ever order again, and 1.99% return within 180 days whether their first order was late or on time; 269,735 BRL was paid on canceled orders. BigQuery, dbt, SQL, Data Studio" width="49%" /></picture></a>
+<a href="https://github.com/baselnasser99/second-order"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/baselnasser99/baselnasser99/raw/main/assets/project-second-order.svg"><img src="assets/project-second-order-light.svg" alt="second-order, shipped: only 2,997 of 96,096 Olist customers (about 3 in 100) ever order again. Within 180 days, 1.69% came back after a late first order and 2.02% after an on-time one, a gap small enough to be chance; 269,735 BRL was paid on canceled orders. BigQuery, dbt, SQL" width="49%" /></picture></a>
 </p>
 
 ---

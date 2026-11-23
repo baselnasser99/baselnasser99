@@ -85,16 +85,16 @@ PROJECTS = [
         "slug": "second-order",
         "name": "second-order",
         "facts": [
-            ("Question", "why don't customers buy twice?"),
-            ("Found", "3 in 100 ever order again"),
-            ("180 days", "1.99% return, late or on time"),
-            ("At risk", "269,735 BRL on canceled orders"),
-            ("Stack", "bigquery, dbt, sql, data studio"),
+            ("Question", "who orders twice?"),
+            ("Found", "2,997 of 96,096"),
+            ("At risk", "269,735 BRL"),
+            ("Stack", "bigquery, dbt, sql"),
         ],
         "status": ("shipped", "GREEN"),
         "typed": "open second-order --dashboard",
-        # 2,997 of 96,096 people ordered a second time (3.12%): drawn as 3 of 100 squares
-        "again": (3, 100),
+        # 2,997 of 96,096 people ordered a second time (3.12%): drawn as 3 of 100 dots, like the project's logo;
+        # 180-day return rate by first order, late vs on time (docs/memo.md): the gap is small enough to be chance
+        "cohort": {"back": 3, "late": 1.69, "on_time": 2.02},
     },
 ]
 
@@ -244,6 +244,46 @@ def heat_map(x0, y0, cols=32, width=168):
     return "".join(out)
 
 
+# second-order's own teal (its logo and dashboard), brightened on the dark card so it reads on black
+TEAL = {"dark": "#2dd4bf", "light": "#0f766e"}
+COHORT_CSS = """
+.c {{ transform-box: fill-box; transform-origin: center; animation: c 8s ease-in-out infinite both; }}
+.c.back {{ animation-name: cb; }}
+@keyframes c {{ 0% {{ opacity: 0; transform: scale(.3); fill: {t}; }} 8%, 45% {{ opacity: 1; transform: none; fill: {t}; }} 60%, 90% {{ opacity: .55; fill: {g}; }} 100% {{ opacity: 0; fill: {g}; }} }}
+@keyframes cb {{ 0% {{ opacity: 0; transform: scale(.3); }} 8%, 90% {{ opacity: 1; transform: none; }} 100% {{ opacity: 0; }} }}
+.ring {{ opacity: 0; animation: ring 8s ease-out infinite; }}
+@keyframes ring {{ 0%, 55% {{ opacity: 0; }} 65% {{ opacity: .9; }} 88% {{ opacity: .9; }} 100% {{ opacity: 0; }} }}
+.bar {{ transform-box: fill-box; transform-origin: left; animation: bar 8s ease-out infinite both; }}
+@keyframes bar {{ 0% {{ transform: scaleX(0); }} 14%, 100% {{ transform: none; }} }}
+@media (prefers-reduced-motion: reduce) {{ .c, .ring, .bar {{ animation: none; opacity: 1; }} .c:not(.back) {{ fill: {g}; opacity: .55; }} }}
+"""
+
+
+def cohort(c, theme):
+    """100 first orders as the project's logo draws them: the dots appear one by one, then 97 fade to grey and the
+    3 who came back stay lit. Beside it, the 180-day return rate for late and on-time first orders."""
+    teal = TEAL[theme]
+    out = [f'<style>{COHORT_CSS.format(t=teal, g=BORDER)}</style>']
+    pitch, x0, y0 = 16, W - 24 - 9 * 16 - 5, 80
+    for i in range(100):
+        cx, cy = x0 + (i % 10) * pitch, y0 + (i // 10) * pitch
+        back = i < c["back"]  # the first three, as in the logo
+        out.append(f'<circle class="c{" back" if back else ""}" style="animation-delay:{i * 0.025:.3f}s" cx="{cx}" cy="{cy}" r="4.5" fill="{teal}"/>')
+        if back:
+            out.append(f'<circle class="ring" style="animation-delay:{i * 0.025:.3f}s" cx="{cx}" cy="{cy}" r="7" fill="none" stroke="{teal}" stroke-width="1.2"/>')
+    out.append(f'<text x="{W - 24}" y="243" text-anchor="end" font-size="11" fill="{GREY}">{c["back"]} in 100 came back</text>')
+    # late vs on time, scaled so the bigger rate is 110px
+    out.append(f'<text x="24" y="182" fill="{GREY}">back within 180 days</text>')
+    for row, (label, rate) in enumerate((("late", c["late"]), ("on time", c["on_time"]))):
+        y = 200 + row * 19
+        w = 110 * rate / max(c["late"], c["on_time"])
+        out.append(f'<text x="24" y="{y}" fill="{WHITE}">{label}</text>'
+                   f'<rect class="bar" x="{24 + 8 * CHAR_W:.1f}" y="{y - 9}" width="{w:.1f}" height="9" rx="2" fill="{teal}" fill-opacity="{0.6 if row == 0 else 1}"/>'
+                   f'<text x="{24 + 8 * CHAR_W + w + 6:.1f}" y="{y}" fill="{WHITE}" font-weight="700">{rate:.2f}%</text>')
+    out.append(f'<text x="24" y="243" font-size="11" fill="{GREY}">a gap small enough to be chance</text>')
+    return "".join(out)
+
+
 def prompt_line(text, y):
     """PS> and a command that types out, with a blinking cursor that follows it (SMIL, restarted by #cycle)."""
     x = 24 + 4 * CHAR_W
@@ -263,7 +303,7 @@ def fact(key, value, x, y):
             f'<tspan fill="{GREEN}">{escape(value)}</tspan></text>')
 
 
-def build(p):
+def build(p, theme):
     label, colour = p["status"][0], globals()[p["status"][1]]  # by name, so each theme gets its own shade
     name_x = 24 + 22 if p.get("heat") else 24  # VanScene's name sits beside its logo mark
     rows = [(vanscene_mark(24, 49) if p.get("heat") else "")
@@ -271,7 +311,6 @@ def build(p):
             f'<circle cx="{W - 24 - len(label) * CHAR_W - 12}" cy="57" r="4" fill="{colour}"/>'
             f'<text x="{W - 24}" y="62" text-anchor="end" fill="{colour}">{escape(label)}</text>']
     rows += [fact(key, value, 24, 92 + i * 21) for i, (key, value) in enumerate(p["facts"])]
-    base = 248
     if p.get("heat"):
         rows.append(heat_map(W - 24 - 168, 80))
         key = [f'<text x="24" y="222" fill="{GREY}">fewer</text>']
@@ -282,24 +321,15 @@ def build(p):
                    f'<text x="{24 + 6 * CHAR_W + 6 * 12 + 4 + 5 * CHAR_W + 16:.1f}" y="222" fill="{GREY}">park</text>'
                    f'<text x="24" y="244" fill="{GREY}">since 2016, pixel ≈ 450 m</text>')
         rows.append("".join(key))
-    if p.get("again"):  # one square per customer out of 100; the few who came back pulse
-        lit, total = p["again"]
-        back = {17, 58, 89}  # spread out, so they read as rare rather than as a block
-        assert len(back) == lit
-        rows.append(f'<text x="24" y="{base - 40}" fill="{GREY}">100 customers, {lit} ordered again</text>')
-        for i in range(total):
-            x, y = 24 + (i % 50) * 7.84, base - 30 + (i // 50) * 9
-            cls, fill = ('class="again" ', GREEN) if i in back else ("", BORDER)
-            rows.append(f'<rect {cls}x="{x:.1f}" y="{y}" width="6" height="6" rx="1" fill="{fill}"/>')
+    if p.get("cohort"):
+        rows.append(cohort(p["cohort"], theme))
 
     return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" font-size="13" role="img" aria-label="{escape(p['name'])}: {escape(p['facts'][0][1])}">
 <style>
 text {{ font-family: {FONT}; }}
 .px {{ transform-box: fill-box; transform-origin: center; animation: blast 7s ease-out infinite both; }}
 @keyframes blast {{ 0% {{ opacity: 0; transform: scale(0); }} 6% {{ opacity: 1; transform: scale(1.5); }} 12%, 85% {{ opacity: 1; transform: scale(1); }} 97%, 100% {{ opacity: 0; transform: scale(1); }} }}
-.again {{ animation: pulse 2.4s ease-in-out infinite; }}
-@keyframes pulse {{ 50% {{ opacity: 0.35; }} }}
-@media (prefers-reduced-motion: reduce) {{ .px, .again {{ animation: none; }} }}
+@media (prefers-reduced-motion: reduce) {{ .px {{ animation: none; }} }}
 </style>
 <rect width="{W}" height="{H}" rx="8" fill="{BG}" stroke="{BORDER}"/>
 {title_bar(p['name'])}
@@ -314,7 +344,7 @@ if __name__ == "__main__":
         make_card.use_palette(theme)  # typing() reads make_card's colours
         make_card.use_palette(theme, globals())
         for p in PROJECTS:
-            svg = build(p)
+            svg = build(p, theme)
             xml.dom.minidom.parseString(svg)  # self-check: invalid XML would show as a broken image on GitHub
             out = ROOT / "assets" / f"project-{p['slug']}{SUFFIX[theme]}.svg"
             out.write_text(svg, encoding="utf-8")
