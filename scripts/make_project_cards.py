@@ -16,8 +16,8 @@ THESIS = {
         ("Rebalance", "live, as people come and go"),
         ("Export", "csv, json, majority answer, kappa"),
         ("Stack", "flask, mysql, docker"),
-        ("Tests", "300+ passing, ~94% coverage"),
-        ("Thesis", "b.sc., university of pécs"),
+        ("Tests", "408 passing, 95% coverage"),  # latest master CI run, 2026-11-16
+        ("Thesis", "bachelor's, university of pécs"),
     ],
     "status": ("shipped", "GREEN"),
     "typed": "open open-tasks --per-person",
@@ -181,7 +181,7 @@ text {{ font-family: {FONT}; }}
 {balance_chart(w - 24 - 406, 74)}
 <path d="M0 {foot}h{w}" stroke="{BORDER}"/>
 {"".join(fact(key, value, 24 if i < half else w // 2 + 12, foot + 34 + (i % half) * 22) for i, (key, value) in enumerate(facts))}
-{flag("hu", w // 2 + 12 + (len("Thesis: b.sc., university of pécs") + 1) * CHAR_W, foot + 34 + 2 * 22 - 10)}
+{flag("hu", w // 2 + 12 + (len("Thesis: " + dict(facts)["Thesis"]) + 1) * CHAR_W, foot + 34 + 2 * 22 - 10)}
 {prompt_line(THESIS["typed"], h - 22)}
 </svg>
 """
